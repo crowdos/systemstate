@@ -2,6 +2,7 @@
 #define STATE_PLUGIN_H
 
 #include <string>
+#include <deque>
 
 namespace systemstate {
 
@@ -22,6 +23,7 @@ public:
   virtual NodeType type() const = 0;
 
   const DirNode *parent() const { return m_parent; }
+  const std::string& name() const { return m_name; }
 
 private:
   const std::string m_name;
@@ -31,23 +33,35 @@ private:
 class FileNode : public Node {
 public:
   FileNode(const std::string& name, DirNode *parent, Plugin *plugin);
+  ~FileNode();
+
   Node::NodeType type() const { return Node::File; }
+  systemstate::Plugin *plugin() const { return m_plugin; }
 
 private:
-  const Plugin *m_plugin;
+  Plugin *m_plugin;
 };
 
 class DirNode : public Node {
 public:
   DirNode(const std::string& name, DirNode *parent);
+  ~DirNode();
+
   Node::NodeType type() const { return Node::Dir; }
 
   DirNode *appendDir(const std::string& name);
   DirNode *appendFile(FileNode *child);
-  bool removeFile(FileNode *child);
+  DirNode *appendFile(const std::string& name, Plugin *plugin);
 
-  ssize_t numberOfChildren() const;
-  const Node *childAt(int x) const;
+#if 0
+  bool removeFile(FileNode *child);
+#endif
+
+  ssize_t numberOfChildren() const { return m_children.size(); }
+  const Node *childAt(int x) const { return m_children.at(x); }
+
+private:
+  std::deque<Node *> m_children;
 };
 
 class Plugin {
