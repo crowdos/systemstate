@@ -1,9 +1,12 @@
+#include "pluginloader.h"
 #include "server.h"
-
-#define SOCK_PATH "/var/run/systemstate"
 
 int
 main(int argc, char *argv[]) {
+  PluginLoader loader;
+
+  systemstate::Node *root = loader.loadPlugins();
+
   // First we scan the info for all plugins
 
   // Next we 
