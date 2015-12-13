@@ -7,6 +7,10 @@ struct IxpServer;
 struct IxpConn;
 struct Ixp9Srv;
 
+namespace systemstate {
+  class Node;
+};
+
 class Server {
 public:
   Server();
@@ -14,7 +18,9 @@ public:
 
   bool start();
 
-  int loop();
+  int loop(systemstate::Node *root);
+
+  systemstate::Node *root() { return m_root; }
 
 private:
   std::string m_addr;
@@ -22,6 +28,8 @@ private:
   IxpConn *m_conn;
   Ixp9Srv *m_table;
   int m_fd;
+
+  systemstate::Node *m_root;
 };
 
 #endif /* SERVER_H */

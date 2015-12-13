@@ -2,31 +2,34 @@
 #include <cstring>
 #include "server.h"
 #include "utils.h"
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
+#include "stateplugin.h"
+#include <vector>
+#include <algorithm>
 extern "C" {
 #include <ixp.h>
 };
 
-class Path {
-public:
-  Path(const char *name) :
-  m_name(name) {}
-  std::string& name() { return m_name; }
-
-private:
-  std::string m_name;
-};
+using namespace systemstate;
 
 static char Enoperm[] = "permission denied",
   Enofile[] = "file not found",
   Ebadvalue[] = "bad value";
 
+static char ID[] = "root";
+#define DEFAULT_SIZE 4096
+
 class Dbg {
 public:
-  Dbg(const char *id) :
+  Dbg(const char *id, Ixp9Req *r) :
   m_id(id) {
+    if (r) {
+      Node *n = reinterpret_cast<Node *>(r->fid->aux);
+      if (n) {
+	std::cerr << ">> " << m_id << " " << n->name() << std::endl;
+	return;
+      }
+    }
+
     std::cerr << ">> " << m_id << std::endl;
   }
 
@@ -37,30 +40,6 @@ public:
 private:
   std::string m_id;
 };
-
-static void
-dostat(IxpStat *s, const char *name, struct stat *buf) {
-  static char *user = "root";
-
-  s->type = 0;
-  s->dev = 0;
-  s->qid.type = buf->st_mode & S_IFMT;
-  s->qid.path = buf->st_ino;
-  s->qid.version = 0;
-  s->mode = buf->st_mode & 0777;
-  if (S_ISDIR(buf->st_mode)) {
-    s->mode |= P9_DMDIR;
-    s->qid.type |= P9_QTDIR;
-  }
-
-  s->atime = buf->st_atime;
-  s->mtime = buf->st_mtime;
-  s->length = buf->st_size;
-  s->name = const_cast<char *>(name);
-  s->uid = user;
-  s->gid = user;
-  s->muid = user;
-}
 
 // TODO: We do not check whether another server is already running or not.
 // I am nit aware of any race-free way to do it.
@@ -101,80 +80,206 @@ bool Server::start() {
   m_table->aux = this;
 
   m_table->attach = [] (Ixp9Req *r) {
-    Dbg("Attach");
+    Dbg("Attach", r);
+    Server *server = reinterpret_cast<Server *>(r->srv->aux);
     r->fid->qid.type = P9_QTDIR;
     r->fid->qid.path = (uintptr_t)r->fid;
-    r->fid->aux = reinterpret_cast<void *>(new Path("/"));
+    r->fid->aux = reinterpret_cast<void *>(server->root());
     r->ofcall.rattach.qid = r->fid->qid;
     ixp_respond(r, 0);
   };
 
   m_table->clunk = [] (Ixp9Req *r) {
-    Dbg("clunk");
+    Dbg("clunk", r);
+    Node *n = reinterpret_cast<Node *>(r->fid->aux);
+    if (n->type() == Node::File) {
+      // TODO:
+    }
+
+    // Nothing for directories.
+
+    ixp_respond(r, 0);
   };
 
   m_table->create = [] (Ixp9Req *r) {
-    Dbg("create");
+    Dbg("create", r);
+    // TODO:
   };
 
   m_table->flush = [] (Ixp9Req *r) {
-    Dbg("flush");
+    Dbg("flush", r);
+    // TODO:
   };
 
   m_table->open = [] (Ixp9Req *r) {
-    Dbg("open");
+    Dbg("open", r);
+
+    Node *n = reinterpret_cast<Node *>(r->fid->aux);
+
+    if (n->type() == Node::File) {
+      FileNode *f = dynamic_cast<FileNode *>(n);
+      if (!f->plugin()->start(f)) {
+	ixp_respond(r, Enofile);
+      }
+    }
+
+    ixp_respond(r, 0);
   };
 
   m_table->read = [] (Ixp9Req *r) {
-    Dbg("read");
+    Dbg("read", r);
+
+    Node *n = reinterpret_cast<Node *>(r->fid->aux);
+
+    if (n->type() == Node::File) {
+      if (r->ifcall.tread.offset == 0) {
+	FileNode *file = dynamic_cast<FileNode *>(n);
+	std::string data;
+	if (file->plugin()->read(file, data)) {
+	  r->ofcall.rread.count = data.size();
+	  r->ofcall.rread.data = reinterpret_cast<char *>(ixp_emallocz(r->ofcall.rread.count));
+	  memcpy(r->ofcall.rread.data, data.c_str(), r->ofcall.rread.count);
+	} else {
+	  ixp_respond(r, Ebadvalue);
+	  return;
+	}
+      }
+    } else if (r->ifcall.tread.offset == 0) {
+      DirNode *d = dynamic_cast<DirNode *>(n);
+      std::vector<IxpStat> stats;
+      for (int x = 0; x < d->numberOfChildren(); x++) {
+	const Node *child = d->childAt(x);
+	IxpStat s;
+	s.type = 0;
+	s.dev = 0;
+	s.qid.version = 0;
+	s.mode = P9_DMREAD;
+	if (child->type() == Node::Dir) {
+	  s.mode |= P9_DMDIR;
+	} else {
+	  s.mode |= P9_DMTMP;
+	}
+	s.atime = 0;
+	s.mtime = 0;
+	s.length = DEFAULT_SIZE;
+	s.uid = ID;
+	s.gid = ID;
+	s.muid = ID;
+	s.qid.type = child->type() == Node::Dir ? P9_QTDIR : P9_QTFILE;
+	s.qid.path = reinterpret_cast<uint64_t>(child);
+	s.name = const_cast<char *>(child->name().c_str());
+	stats.push_back(std::move(s));
+      }
+
+      int size = 0;
+      std::for_each(stats.begin(), stats.end(), [&size](const IxpStat& s) mutable {
+	  size += ixp_sizeof_stat(const_cast<IxpStat *>(&s));
+	});
+
+      char *buff = reinterpret_cast<char *>(ixp_emallocz(size));
+      IxpMsg m = ixp_message(buff, size, MsgPack);
+      std::for_each(stats.begin(), stats.end(), [&m](const IxpStat& s) {
+	  ixp_pstat(&m, const_cast<IxpStat *>(&s));
+	});
+
+      r->ofcall.rread.count = size;
+      r->ofcall.rread.data = m.data;
+    } else {
+      r->ofcall.rread.count = 0;
+    }
+    ixp_respond(r, 0);
   };
 
   m_table->remove = [] (Ixp9Req *r) {
-    Dbg("remove");
+    Dbg("remove", r);
+    // TODO:
   };
 
   m_table->stat = [] (Ixp9Req *r) {
-    Dbg("stat");
-    Path *p = reinterpret_cast<Path *>(r->fid->aux);
-
-    struct stat buf;
-    if (stat(p->name().c_str(), &buf) != 0) {
-      ixp_respond(r, Enofile);
-      return;
-    }
+    Dbg("stat", r);
+    Node *n = reinterpret_cast<Node *>(r->fid->aux);
 
     IxpStat s;
-    uint16_t size;
-    IxpMsg m;
-    dostat(&s, p->name().c_str(), &buf);
+    s.type = 0;
+    s.dev = 0;
+    s.qid.type = n->type() == Node::Dir ? P9_QTDIR : P9_QTFILE;
+    s.qid.path = reinterpret_cast<uint64_t>(n);
+    s.qid.version = 0;
+    s.mode = P9_DMREAD;
+    if (n->type() == Node::Dir) {
+      s.mode |= P9_DMDIR;
+    } else {
+      s.mode |= P9_DMTMP;
+    }
 
+    s.atime = 0;
+    s.mtime = 0;
+    s.length = DEFAULT_SIZE;
+    s.name = const_cast<char *>(n->name().c_str());
+    s.uid = ID;
+    s.gid = ID;
+    s.muid = ID;
+
+    uint16_t size;
     r->fid->qid = s.qid;
     r->ofcall.rstat.nstat = size = ixp_sizeof_stat(&s);
     char *buff = reinterpret_cast<char *>(ixp_emallocz(size));
-    m = ixp_message(buff, size, MsgPack);
+    IxpMsg m = ixp_message(buff, size, MsgPack);
     ixp_pstat(&m, &s);
     r->ofcall.rstat.stat = reinterpret_cast<uint8_t *>(m.data);
     ixp_respond(r, 0);
   };
 
   m_table->walk = [] (Ixp9Req *r) {
-    Dbg("walk");
-    Path *p = reinterpret_cast<Path *>(r->fid->aux);
+    Dbg("walk", r);
+    Node *n = reinterpret_cast<Node *>(r->fid->aux);
+    DirNode *d = dynamic_cast<DirNode *>(n);
+    if (!n) {
+      ixp_respond(r, Ebadvalue);
+      return;
+    }
 
-    std::cout << p->name() << std::endl;
+    for (int x = 0; x < r->ifcall.twalk.nwname; x++) {
+      char *name = r->ifcall.twalk.wname[x];
+      std::deque<Node *>::iterator iter =
+      std::find_if(d->begin(), d->end(), [name](Node * node) -> bool {
+	  return node->name() == name;
+	});
+
+      if (iter == d->end()) {
+	std::cerr << "Cannot find node " << name << std::endl;
+	ixp_respond(r, Ebadvalue);
+	return;
+      }
+
+      n = *iter;
+      r->ofcall.rwalk.wqid[x].type = n->type() == Node::Dir ? P9_QTDIR : P9_QTTMP;
+      r->ofcall.rwalk.wqid[x].path = reinterpret_cast<uint64_t>(n);
+    }
+
+    if (!n) {
+      ixp_respond(r, Ebadvalue);
+      return;
+    }
+
+    r->newfid->aux = n;
+    r->ofcall.rwalk.nwqid = r->ifcall.twalk.nwname; // TODO: ??
+    ixp_respond(r, 0);
   };
 
   m_table->write = [] (Ixp9Req *r) {
-    Dbg("write");
+    Dbg("write", r);
+    // TODO:
   };
 
   m_table->wstat = [] (Ixp9Req *r) {
-    Dbg("wstat");
+    Dbg("wstat", r);
+    // TODO:
   };
 
   m_table->freefid = [] (IxpFid *f) {
-    Dbg("freefid");
-    delete reinterpret_cast<Path *>(f->aux);
+    Dbg("freefid", 0);
+    // Nothing.
   };
 
   m_conn = ixp_listen(m_srv, m_fd, m_table, ixp_serve9conn, NULL);
@@ -182,14 +287,16 @@ bool Server::start() {
   return true;
 }
 
-int Server::loop() {
+int Server::loop(systemstate::Node *root) {
   if (!m_srv || !m_conn) {
     return 1;
   }
 
   std::cout << "Listening on address: " << m_addr << std::endl;
 
+  m_root = root;
   int rc = ixp_serverloop(m_srv);
+  m_root = nullptr;
 
   if (rc != 0) {
     std::cerr << "Server exited: " << ixp_errbuf() << std::endl;
