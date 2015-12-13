@@ -49,18 +49,17 @@ DirNode *DirNode::appendDir(const std::string& name) {
   return node;
 }
 
-DirNode *DirNode::appendFile(FileNode *child) {
+FileNode *DirNode::appendFile(FileNode *child) {
   m_children.push_back(child);
-
-  return this;
+  return child;
 }
 
-DirNode *DirNode::appendFile(const std::string& name, Plugin *plugin) {
+FileNode *DirNode::appendFile(const std::string& name, Plugin *plugin) {
   FileNode *node = new FileNode(name, this, plugin);
 
   m_children.push_back(node);
 
-  return this;
+  return node;
 }
 
 #if 0

@@ -50,8 +50,8 @@ public:
   Node::NodeType type() const { return Node::Dir; }
 
   DirNode *appendDir(const std::string& name);
-  DirNode *appendFile(FileNode *child);
-  DirNode *appendFile(const std::string& name, Plugin *plugin);
+  FileNode *appendFile(FileNode *child);
+  FileNode *appendFile(const std::string& name, Plugin *plugin);
 
 #if 0
   bool removeFile(FileNode *child);
