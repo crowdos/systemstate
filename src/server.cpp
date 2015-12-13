@@ -171,17 +171,14 @@ bool Server::start() {
     } else if (r->ifcall.tread.offset == 0) {
       DirNode *d = dynamic_cast<DirNode *>(n);
       std::vector<IxpStat> stats;
+      int size = 0;
       for (int x = 0; x < d->numberOfChildren(); x++) {
 	const Node *child = d->childAt(x);
 	IxpStat s;
 	fillState(s, child);
+        size += ixp_sizeof_stat(&s);
 	stats.push_back(std::move(s));
       }
-
-      int size = 0;
-      std::for_each(stats.begin(), stats.end(), [&size](const IxpStat& s) mutable {
-	  size += ixp_sizeof_stat(const_cast<IxpStat *>(&s));
-	});
 
       char *buff = reinterpret_cast<char *>(ixp_emallocz(size));
       IxpMsg m = ixp_message(buff, size, MsgPack);
