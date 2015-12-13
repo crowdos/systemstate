@@ -60,6 +60,9 @@ public:
   ssize_t numberOfChildren() const { return m_children.size(); }
   const Node *childAt(int x) const { return m_children.at(x); }
 
+  std::deque<Node *>::iterator begin() { return m_children.begin(); }
+  std::deque<Node *>::iterator end() { return m_children.end(); }
+
 private:
   std::deque<Node *> m_children;
 };
