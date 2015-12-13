@@ -144,6 +144,7 @@ bool Server::start() {
       FileNode *f = dynamic_cast<FileNode *>(n);
       if (!f->plugin()->start(f)) {
 	ixp_respond(r, Enofile);
+	return;
       }
     }
 
