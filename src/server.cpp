@@ -107,7 +107,7 @@ bool Server::start() {
     Dbg("Attach", r);
     Server *server = reinterpret_cast<Server *>(r->srv->aux);
     r->fid->qid.type = P9_QTDIR;
-    r->fid->qid.path = (uintptr_t)r->fid;
+    r->fid->qid.path = reinterpret_cast<uint64_t>(server->root());
     r->fid->aux = reinterpret_cast<void *>(server->root());
     r->ofcall.rattach.qid = r->fid->qid;
     ixp_respond(r, 0);
