@@ -199,7 +199,7 @@ bool Server::start() {
 
   m_table->remove = [] (Ixp9Req *r) {
     Dbg("remove", r);
-    // TODO:
+    ixp_respond(r, Enoperm);
   };
 
   m_table->stat = [] (Ixp9Req *r) {
