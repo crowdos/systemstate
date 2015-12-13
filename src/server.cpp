@@ -15,8 +15,32 @@ static char Enoperm[] = "permission denied",
   Enofile[] = "file not found",
   Ebadvalue[] = "bad value";
 
-static char ID[] = "root";
 #define DEFAULT_SIZE 4096
+
+static char fillState(IxpStat& s, const Node *& node) {
+  static char id[] = "root";
+
+  s.qid.type = node->type() == Node::Dir ? P9_QTDIR : P9_QTFILE;
+  s.qid.path = reinterpret_cast<uint64_t>(node);
+  s.qid.version = 0;
+
+  s.type = 0;
+  s.dev = 0;
+  s.mode = P9_DMREAD;
+  if (node->type() == Node::Dir) {
+    s.mode |= P9_DMDIR;
+  } else {
+    s.mode |= P9_DMTMP;
+  }
+
+  s.atime = 0;
+  s.mtime = 0;
+  s.length = DEFAULT_SIZE;
+  s.name = const_cast<char *>(node->name().c_str());
+  s.uid = id;
+  s.gid = id;
+  s.muid = id;
+}
 
 class Dbg {
 public:
@@ -150,24 +174,7 @@ bool Server::start() {
       for (int x = 0; x < d->numberOfChildren(); x++) {
 	const Node *child = d->childAt(x);
 	IxpStat s;
-	s.type = 0;
-	s.dev = 0;
-	s.qid.version = 0;
-	s.mode = P9_DMREAD;
-	if (child->type() == Node::Dir) {
-	  s.mode |= P9_DMDIR;
-	} else {
-	  s.mode |= P9_DMTMP;
-	}
-	s.atime = 0;
-	s.mtime = 0;
-	s.length = DEFAULT_SIZE;
-	s.uid = ID;
-	s.gid = ID;
-	s.muid = ID;
-	s.qid.type = child->type() == Node::Dir ? P9_QTDIR : P9_QTFILE;
-	s.qid.path = reinterpret_cast<uint64_t>(child);
-	s.name = const_cast<char *>(child->name().c_str());
+	fillState(s, child);
 	stats.push_back(std::move(s));
       }
 
@@ -197,28 +204,10 @@ bool Server::start() {
 
   m_table->stat = [] (Ixp9Req *r) {
     Dbg("stat", r);
-    Node *n = reinterpret_cast<Node *>(r->fid->aux);
+    const Node *n = reinterpret_cast<Node *>(r->fid->aux);
 
     IxpStat s;
-    s.type = 0;
-    s.dev = 0;
-    s.qid.type = n->type() == Node::Dir ? P9_QTDIR : P9_QTFILE;
-    s.qid.path = reinterpret_cast<uint64_t>(n);
-    s.qid.version = 0;
-    s.mode = P9_DMREAD;
-    if (n->type() == Node::Dir) {
-      s.mode |= P9_DMDIR;
-    } else {
-      s.mode |= P9_DMTMP;
-    }
-
-    s.atime = 0;
-    s.mtime = 0;
-    s.length = DEFAULT_SIZE;
-    s.name = const_cast<char *>(n->name().c_str());
-    s.uid = ID;
-    s.gid = ID;
-    s.muid = ID;
+    fillState(s, n);
 
     uint16_t size;
     r->fid->qid = s.qid;
