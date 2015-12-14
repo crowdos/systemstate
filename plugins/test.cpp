@@ -1,5 +1,6 @@
 #include "stateplugin.h"
 #include <iostream>
+#include <sstream>
 
 using namespace systemstate;
 

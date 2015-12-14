@@ -3,6 +3,8 @@
 
 #include <string>
 #include <deque>
+#include <list>
+#include <functional>
 
 namespace systemstate {
 
@@ -37,8 +39,19 @@ public:
 
   Node::NodeType type() const { return Node::File; }
   systemstate::Plugin *plugin() const { return m_plugin; }
+  uint64_t version() const { return m_version; }
+  void addListener(std::function<void()> *func);
+  void removeListener(std::function<void()> *func);
+  bool open();
+  void close();
+
+protected:
+  void dataChanged();
 
 private:
+  std::list<std::function<void()> *> m_listeners;
+  int m_open;
+  uint64_t m_version;
   Plugin *m_plugin;
 };
 

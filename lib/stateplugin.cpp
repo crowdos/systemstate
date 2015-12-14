@@ -1,5 +1,6 @@
 #include "stateplugin.h"
 #include <algorithm>
+#include <assert.h>
 
 using namespace systemstate;
 
@@ -15,12 +16,58 @@ Node::~Node() {
 
 FileNode::FileNode(const std::string& name, DirNode *parent, Plugin *plugin) :
   Node(name, parent),
+  m_open(0),
+  m_version(0),
   m_plugin(plugin) {
 
 }
 
 FileNode::~FileNode() {
   m_plugin = nullptr;
+
+  assert(m_listeners.size() == 0);
+}
+
+void FileNode::addListener(std::function<void()> *func) {
+  m_listeners.push_back(func);
+}
+
+void FileNode::removeListener(std::function<void()> *func) {
+  auto iter = std::find(m_listeners.begin(), m_listeners.end(), func);
+  if (iter != m_listeners.end()) {
+    m_listeners.erase(iter);
+  }
+}
+
+bool FileNode::open() {
+  if (m_open > 0) {
+    ++m_open;
+    return true;
+  }
+
+  if (plugin()->start(this)) {
+    ++m_open;
+    return true;
+  }
+
+  return false;
+}
+
+void FileNode::close() {
+  --m_open;
+
+  if (m_open == 0) {
+    plugin()->stop(this);
+  }
+}
+
+void FileNode::dataChanged() {
+  ++m_version;
+
+  // Inform listeners:
+  for (std::function<void()> *func : m_listeners) {
+    (*func)();
+  }
 }
 
 DirNode::DirNode(const std::string& name, DirNode *parent) :

@@ -2,12 +2,12 @@
 #include <cstring>
 #include "server.h"
 #include "utils.h"
+#include "fidaux.h"
 #include "stateplugin.h"
 #include <vector>
 #include <algorithm>
-extern "C" {
-#include <ixp.h>
-};
+#include <cassert>
+#include "libixp.h"
 
 using namespace systemstate;
 
@@ -17,7 +17,7 @@ static char Enoperm[] = "permission denied",
 
 #define DEFAULT_SIZE 4096
 
-static char fillState(IxpStat& s, const Node *& node) {
+static char fillState(IxpStat& s, const Node * node) {
   static char id[] = "root";
 
   s.qid.type = node->type() == Node::Dir ? P9_QTDIR : P9_QTFILE;
@@ -47,10 +47,13 @@ public:
   Dbg(const char *id, Ixp9Req *r) :
   m_id(id) {
     if (r) {
-      Node *n = reinterpret_cast<Node *>(r->fid->aux);
-      if (n) {
-	std::cerr << ">> " << m_id << " " << n->name() << std::endl;
-	return;
+      FidAux *a = reinterpret_cast<FidAux *>(r->fid->aux);
+      if (a) {
+	Node *n = a->node();
+	if (n) {
+	  std::cerr << ">> " << m_id << " " << n->name() << std::endl;
+	  return;
+	}
       }
     }
 
@@ -108,26 +111,23 @@ bool Server::start() {
     Server *server = reinterpret_cast<Server *>(r->srv->aux);
     r->fid->qid.type = P9_QTDIR;
     r->fid->qid.path = reinterpret_cast<uint64_t>(server->root());
-    r->fid->aux = reinterpret_cast<void *>(server->root());
+    assert(r->fid->aux == 0);
+    r->fid->aux = new FidAux(server->root());
     r->ofcall.rattach.qid = r->fid->qid;
     ixp_respond(r, 0);
   };
 
   m_table->clunk = [] (Ixp9Req *r) {
     Dbg("clunk", r);
-    Node *n = reinterpret_cast<Node *>(r->fid->aux);
-    if (n->type() == Node::File) {
-      // TODO:
-    }
-
-    // Nothing for directories.
-
+    FidAux *a = reinterpret_cast<FidAux *>(r->fid->aux);
+    a->close();
     ixp_respond(r, 0);
   };
 
   m_table->create = [] (Ixp9Req *r) {
     Dbg("create", r);
-    // TODO:
+
+    ixp_respond(r, Enoperm);
   };
 
   m_table->flush = [] (Ixp9Req *r) {
@@ -138,14 +138,10 @@ bool Server::start() {
   m_table->open = [] (Ixp9Req *r) {
     Dbg("open", r);
 
-    Node *n = reinterpret_cast<Node *>(r->fid->aux);
-
-    if (n->type() == Node::File) {
-      FileNode *f = dynamic_cast<FileNode *>(n);
-      if (!f->plugin()->start(f)) {
-	ixp_respond(r, Enofile);
-	return;
-      }
+    FidAux *a = reinterpret_cast<FidAux *>(r->fid->aux);
+    if (!a->open()) {
+      ixp_respond(r, Enofile);
+      return;
     }
 
     ixp_respond(r, 0);
@@ -154,45 +150,24 @@ bool Server::start() {
   m_table->read = [] (Ixp9Req *r) {
     Dbg("read", r);
 
-    Node *n = reinterpret_cast<Node *>(r->fid->aux);
+    FidAux *a = reinterpret_cast<FidAux *>(r->fid->aux);
+    char *data = 0;
+    uint32_t len = 0;
 
-    if (n->type() == Node::File) {
-      if (r->ifcall.tread.offset == 0) {
-	FileNode *file = dynamic_cast<FileNode *>(n);
-	std::string data;
-	if (file->plugin()->read(file, data)) {
-	  r->ofcall.rread.count = data.size();
-	  r->ofcall.rread.data = reinterpret_cast<char *>(ixp_emallocz(r->ofcall.rread.count));
-	  memcpy(r->ofcall.rread.data, data.c_str(), r->ofcall.rread.count);
-	} else {
-	  ixp_respond(r, Ebadvalue);
-	  return;
-	}
-      }
-    } else if (r->ifcall.tread.offset == 0) {
-      DirNode *d = dynamic_cast<DirNode *>(n);
-      std::vector<IxpStat> stats;
-      int size = 0;
-      for (int x = 0; x < d->numberOfChildren(); x++) {
-	const Node *child = d->childAt(x);
-	IxpStat s;
-	fillState(s, child);
-        size += ixp_sizeof_stat(&s);
-	stats.push_back(std::move(s));
-      }
+    switch (a->read(data, len, r->ifcall.tread.offset, r->ifcall.tread.count)) {
+    case FidAux::Error:
+      ixp_respond(r, Ebadvalue);
+      return;
+    case FidAux::Ok:
+      r->ofcall.rread.count = len;
+      r->ofcall.rread.data = data;
+      ixp_respond(r, 0);
+      return;
 
-      char *buff = reinterpret_cast<char *>(ixp_emallocz(size));
-      IxpMsg m = ixp_message(buff, size, MsgPack);
-      std::for_each(stats.begin(), stats.end(), [&m](const IxpStat& s) {
-	  ixp_pstat(&m, const_cast<IxpStat *>(&s));
-	});
-
-      r->ofcall.rread.count = size;
-      r->ofcall.rread.data = m.data;
-    } else {
-      r->ofcall.rread.count = 0;
+    case FidAux::NoReply:
+      // Postpone the reply.
+      return;
     }
-    ixp_respond(r, 0);
   };
 
   m_table->remove = [] (Ixp9Req *r) {
@@ -202,24 +177,21 @@ bool Server::start() {
 
   m_table->stat = [] (Ixp9Req *r) {
     Dbg("stat", r);
-    const Node *n = reinterpret_cast<Node *>(r->fid->aux);
+    FidAux *a = reinterpret_cast<FidAux *>(r->fid->aux);
 
-    IxpStat s;
-    fillState(s, n);
+    char *data = 0;
+    uint32_t len = 0;
+    a->stat(data, len);
 
-    uint16_t size;
-    r->fid->qid = s.qid;
-    r->ofcall.rstat.nstat = size = ixp_sizeof_stat(&s);
-    char *buff = reinterpret_cast<char *>(ixp_emallocz(size));
-    IxpMsg m = ixp_message(buff, size, MsgPack);
-    ixp_pstat(&m, &s);
-    r->ofcall.rstat.stat = reinterpret_cast<uint8_t *>(m.data);
+    r->ofcall.rstat.nstat = len;
+    r->ofcall.rstat.stat = reinterpret_cast<uint8_t *>(data);
     ixp_respond(r, 0);
   };
 
   m_table->walk = [] (Ixp9Req *r) {
     Dbg("walk", r);
-    Node *n = reinterpret_cast<Node *>(r->fid->aux);
+    FidAux *a = reinterpret_cast<FidAux *>(r->fid->aux);
+    Node *n = a->node();
     DirNode *d = dynamic_cast<DirNode *>(n);
     if (!n) {
       ixp_respond(r, Ebadvalue);
@@ -249,24 +221,27 @@ bool Server::start() {
       return;
     }
 
-    r->newfid->aux = n;
-    r->ofcall.rwalk.nwqid = r->ifcall.twalk.nwname; // TODO: ??
+    assert(r->newfid->aux == 0);
+    r->newfid->aux = new FidAux(n);
+    r->ofcall.rwalk.nwqid = r->ifcall.twalk.nwname;
     ixp_respond(r, 0);
   };
 
   m_table->write = [] (Ixp9Req *r) {
     Dbg("write", r);
-    // TODO:
+    ixp_respond(r, Enoperm);
   };
 
   m_table->wstat = [] (Ixp9Req *r) {
     Dbg("wstat", r);
-    // TODO:
+    ixp_respond(r, Enoperm);
   };
 
   m_table->freefid = [] (IxpFid *f) {
     Dbg("freefid", 0);
-    // Nothing.
+
+    delete reinterpret_cast<FidAux *>(f->aux);
+    f->aux = nullptr;
   };
 
   m_conn = ixp_listen(m_srv, m_fd, m_table, ixp_serve9conn, NULL);
