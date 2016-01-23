@@ -28,9 +28,8 @@ public:
 
     if (ver != PROTOCOL_VERSION) {
       std::cerr << "Protocol version is not supported: " << std::hex << ver << std::endl;
-      // TODO:
-      //      close();
-      //      return;
+      close();
+      return;
     }
 
     read_length();
