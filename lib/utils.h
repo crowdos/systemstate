@@ -3,8 +3,11 @@
 
 #include <string>
 
+#define POLL_TIMEOUT         5000 // milliseconds
+#define LISTEN_BACKLOG       5
+
 namespace Utils {
-  bool getAddress(std::string& addr);
+  std::string getAddress();
 };
 
 #endif /* UTILS_H */

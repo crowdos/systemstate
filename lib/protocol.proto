@@ -1,0 +1,17 @@
+package systemstate;
+
+message Request {
+  enum Op {
+    Error = 0;
+    Connect = 1;
+    List = 2;
+    Read = 3;
+    Write = 4;
+    Subscribe = 5;
+    Unsubscribe = 6;
+    Notify = 7;
+  }
+
+  required Op op = 1;
+  optional string path = 2;
+}

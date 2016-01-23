@@ -1,268 +1,104 @@
 #include <iostream>
-#include <cstring>
 #include "server.h"
-#include "utils.h"
-#include "fidaux.h"
 #include "stateplugin.h"
-#include <vector>
-#include <algorithm>
-#include <cassert>
-#include "libixp.h"
+#include "protocol.h"
+#include <arpa/inet.h>
 
 using namespace systemstate;
 
-static char Enoperm[] = "permission denied",
-  Enofile[] = "file not found",
-  Ebadvalue[] = "bad value";
-
-#define DEFAULT_SIZE 4096
-
-static char fillState(IxpStat& s, const Node * node) {
-  static char id[] = "root";
-
-  s.qid.type = node->type() == Node::Dir ? P9_QTDIR : P9_QTFILE;
-  s.qid.path = reinterpret_cast<uint64_t>(node);
-  s.qid.version = 0;
-
-  s.type = 0;
-  s.dev = 0;
-  s.mode = P9_DMREAD;
-  if (node->type() == Node::Dir) {
-    s.mode |= P9_DMDIR;
-  } else {
-    s.mode |= P9_DMTMP;
-  }
-
-  s.atime = 0;
-  s.mtime = 0;
-  s.length = DEFAULT_SIZE;
-  s.name = const_cast<char *>(node->name().c_str());
-  s.uid = id;
-  s.gid = id;
-  s.muid = id;
-}
-
-class Dbg {
+class Session {
 public:
-  Dbg(const char *id, Ixp9Req *r) :
-  m_id(id) {
-    if (r) {
-      FidAux *a = reinterpret_cast<FidAux *>(r->fid->aux);
-      if (a) {
-	Node *n = a->node();
-	if (n) {
-	  std::cerr << ">> " << m_id << " " << n->name() << std::endl;
-	  return;
-	}
-      }
+  Session(boost::asio::io_service& service) :
+    m_socket(boost::asio::local::stream_protocol::socket(service)),
+    m_len(0) {}
+
+  boost::asio::local::stream_protocol::socket& socket() { return m_socket; }
+
+  void start() {
+    // Read protocol version:
+    uint8_t ver = 0x0;
+
+    try {
+      m_socket.receive(boost::asio::buffer(&ver, 1));
+    } catch (std::exception& ex) {
+      std::cerr << "Error reading from socket: " << ex.what() << std::endl;
+      close();
+      return;
     }
 
-    std::cerr << ">> " << m_id << std::endl;
-  }
+    if (ver != PROTOCOL_VERSION) {
+      std::cerr << "Protocol version is not supported: " << std::hex << ver << std::endl;
+      // TODO:
+      //      close();
+      //      return;
+    }
 
-  ~Dbg() {
-    std::cerr << "<< " << m_id << std::endl;
+    read_length();
   }
 
 private:
-  std::string m_id;
+  void read_length() {
+    m_socket.async_receive(boost::asio::buffer(&m_len, 4),
+			   [this] (const boost::system::error_code& error,
+			       std::size_t bytes_transferred) {
+			     m_len = ntohl(m_len);
+
+			     if (error) {
+			       std::cerr << "Failed to read header" << std::endl;
+			       close();
+			       return;
+			     }
+
+			     std::cerr << m_len << " " << error;
+			   });
+  }
+
+  void close() {
+    m_socket.close();
+    delete this;
+  }
+
+  boost::asio::local::stream_protocol::socket m_socket;
+  uint32_t m_len;
 };
 
 // TODO: We do not check whether another server is already running or not.
 // I am nit aware of any race-free way to do it.
-Server::Server() :
-  m_srv(0),
-  m_fd(-1),
-  m_conn(0) {
+Server::Server(const std::string& path, boost::asio::io_service& service,
+	       systemstate::Node *root) :
+  m_service(service),
+  m_root(root),
+  m_ep(boost::asio::local::stream_protocol::endpoint(path)),
+  m_acceptor(boost::asio::local::stream_protocol::acceptor(m_service, m_ep))
+{
 
 }
 
 Server::~Server() {
-  // TODO:
+  shutdown();
 }
 
-bool Server::start() {
-  if (m_srv) {
-    std::cerr << "Server already running" << std::endl;
-    return false;
-  }
+void Server::start() {
+  Session *sess = new Session(m_service);
 
-  if (!Utils::getAddress(m_addr)) {
-    // getAddress() will print an error.
-    return false;
-  }
-
-  m_fd = ixp_announce(m_addr.c_str());
-
-  if (m_fd == -1) {
-    std::cerr << "Failed to listen on address " << m_addr << ": " << ixp_errbuf() << std::endl;
-    return false;
-  }
-
-  m_srv = new IxpServer;
-
-  memset(m_srv, 0x0, sizeof(IxpServer));
-
-  m_table = new Ixp9Srv;
-  m_table->aux = this;
-
-  m_table->attach = [] (Ixp9Req *r) {
-    Dbg("Attach", r);
-    Server *server = reinterpret_cast<Server *>(r->srv->aux);
-    r->fid->qid.type = P9_QTDIR;
-    r->fid->qid.path = reinterpret_cast<uint64_t>(server->root());
-    assert(r->fid->aux == 0);
-    r->fid->aux = new FidAux(server->root());
-    r->ofcall.rattach.qid = r->fid->qid;
-    ixp_respond(r, 0);
-  };
-
-  m_table->clunk = [] (Ixp9Req *r) {
-    Dbg("clunk", r);
-    FidAux *a = reinterpret_cast<FidAux *>(r->fid->aux);
-    a->close();
-    ixp_respond(r, 0);
-  };
-
-  m_table->create = [] (Ixp9Req *r) {
-    Dbg("create", r);
-
-    ixp_respond(r, Enoperm);
-  };
-
-  m_table->flush = [] (Ixp9Req *r) {
-    Dbg("flush", r);
-    // TODO:
-  };
-
-  m_table->open = [] (Ixp9Req *r) {
-    Dbg("open", r);
-
-    FidAux *a = reinterpret_cast<FidAux *>(r->fid->aux);
-    if (!a->open()) {
-      ixp_respond(r, Enofile);
-      return;
-    }
-
-    ixp_respond(r, 0);
-  };
-
-  m_table->read = [] (Ixp9Req *r) {
-    Dbg("read", r);
-
-    FidAux *a = reinterpret_cast<FidAux *>(r->fid->aux);
-    char *data = 0;
-    uint32_t len = 0;
-
-    switch (a->read(data, len, r->ifcall.tread.offset, r->ifcall.tread.count)) {
-    case FidAux::Error:
-      ixp_respond(r, Ebadvalue);
-      return;
-    case FidAux::Ok:
-      r->ofcall.rread.count = len;
-      r->ofcall.rread.data = data;
-      ixp_respond(r, 0);
-      return;
-
-    case FidAux::NoReply:
-      // Postpone the reply.
-      return;
-    }
-  };
-
-  m_table->remove = [] (Ixp9Req *r) {
-    Dbg("remove", r);
-    ixp_respond(r, Enoperm);
-  };
-
-  m_table->stat = [] (Ixp9Req *r) {
-    Dbg("stat", r);
-    FidAux *a = reinterpret_cast<FidAux *>(r->fid->aux);
-
-    char *data = 0;
-    uint32_t len = 0;
-    a->stat(data, len);
-
-    r->ofcall.rstat.nstat = len;
-    r->ofcall.rstat.stat = reinterpret_cast<uint8_t *>(data);
-    ixp_respond(r, 0);
-  };
-
-  m_table->walk = [] (Ixp9Req *r) {
-    Dbg("walk", r);
-    FidAux *a = reinterpret_cast<FidAux *>(r->fid->aux);
-    Node *n = a->node();
-    DirNode *d = dynamic_cast<DirNode *>(n);
-    if (!n) {
-      ixp_respond(r, Ebadvalue);
-      return;
-    }
-
-    for (int x = 0; x < r->ifcall.twalk.nwname; x++) {
-      char *name = r->ifcall.twalk.wname[x];
-      std::deque<Node *>::iterator iter =
-      std::find_if(d->begin(), d->end(), [name](Node * node) -> bool {
-	  return node->name() == name;
-	});
-
-      if (iter == d->end()) {
-	std::cerr << "Cannot find node " << name << std::endl;
-	ixp_respond(r, Ebadvalue);
-	return;
+  m_acceptor.async_accept(sess->socket(), [this, sess] (const boost::system::error_code& error) {
+      if (error) {
+	std::cerr << "Failed to accept connection: " << error << std::endl;
+	delete sess;
+      } else {
+	sess->start();
       }
-
-      n = *iter;
-      r->ofcall.rwalk.wqid[x].type = n->type() == Node::Dir ? P9_QTDIR : P9_QTTMP;
-      r->ofcall.rwalk.wqid[x].path = reinterpret_cast<uint64_t>(n);
-    }
-
-    if (!n) {
-      ixp_respond(r, Ebadvalue);
-      return;
-    }
-
-    assert(r->newfid->aux == 0);
-    r->newfid->aux = new FidAux(n);
-    r->ofcall.rwalk.nwqid = r->ifcall.twalk.nwname;
-    ixp_respond(r, 0);
-  };
-
-  m_table->write = [] (Ixp9Req *r) {
-    Dbg("write", r);
-    ixp_respond(r, Enoperm);
-  };
-
-  m_table->wstat = [] (Ixp9Req *r) {
-    Dbg("wstat", r);
-    ixp_respond(r, Enoperm);
-  };
-
-  m_table->freefid = [] (IxpFid *f) {
-    Dbg("freefid", 0);
-
-    delete reinterpret_cast<FidAux *>(f->aux);
-    f->aux = nullptr;
-  };
-
-  m_conn = ixp_listen(m_srv, m_fd, m_table, ixp_serve9conn, NULL);
-
-  return true;
+      start();
+    });
 }
 
-int Server::loop(systemstate::Node *root) {
-  if (!m_srv || !m_conn) {
-    return 1;
-  }
+int Server::loop() {
+  m_service.run();
 
-  std::cout << "Listening on address: " << m_addr << std::endl;
+  return 0;
+}
 
-  m_root = root;
-  int rc = ixp_serverloop(m_srv);
-  m_root = nullptr;
-
-  if (rc != 0) {
-    std::cerr << "Server exited: " << ixp_errbuf() << std::endl;
-  }
-
-  return rc;
+void Server::shutdown() {
+  // TODO:
+  m_service.stop();
 }

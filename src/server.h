@@ -2,10 +2,7 @@
 #define SERVER_H
 
 #include <string>
-
-struct IxpServer;
-struct IxpConn;
-struct Ixp9Srv;
+#include <boost/asio.hpp>
 
 namespace systemstate {
   class Node;
@@ -13,23 +10,22 @@ namespace systemstate {
 
 class Server {
 public:
-  Server();
+  Server(const std::string& path, boost::asio::io_service& service, systemstate::Node *root);
   ~Server();
 
-  bool start();
+  void start();
 
-  int loop(systemstate::Node *root);
+  int loop();
 
   systemstate::Node *root() { return m_root; }
 
 private:
-  std::string m_addr;
-  IxpServer *m_srv;
-  IxpConn *m_conn;
-  Ixp9Srv *m_table;
-  int m_fd;
+  void shutdown();
 
   systemstate::Node *m_root;
+  boost::asio::io_service& m_service;
+  boost::asio::local::stream_protocol::endpoint m_ep;
+  boost::asio::local::stream_protocol::acceptor m_acceptor;
 };
 
 #endif /* SERVER_H */
