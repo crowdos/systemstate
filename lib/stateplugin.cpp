@@ -28,12 +28,12 @@ FileNode::~FileNode() {
   assert(m_listeners.size() == 0);
 }
 
-void FileNode::addListener(std::function<void()> *func) {
-  m_listeners.push_back(func);
+void FileNode::addListener(Listener *listener) {
+  m_listeners.push_back(listener);
 }
 
-void FileNode::removeListener(std::function<void()> *func) {
-  auto iter = std::find(m_listeners.begin(), m_listeners.end(), func);
+void FileNode::removeListener(Listener *listener) {
+  auto iter = std::find(m_listeners.begin(), m_listeners.end(), listener);
   if (iter != m_listeners.end()) {
     m_listeners.erase(iter);
   }
@@ -61,12 +61,12 @@ void FileNode::close() {
   }
 }
 
-void FileNode::dataChanged() {
+void FileNode::dataChanged(const std::string& data) {
   ++m_version;
 
   // Inform listeners:
-  for (std::function<void()> *func : m_listeners) {
-    (*func)();
+  for (Listener *listener : m_listeners) {
+    listener->dataChanged(data);
   }
 }
 

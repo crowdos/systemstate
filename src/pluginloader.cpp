@@ -23,7 +23,7 @@ PluginLoader::~PluginLoader() {
 
 }
 
-systemstate::Node *PluginLoader::loadPlugins() {
+systemstate::DirNode *PluginLoader::loadPlugins() {
   systemstate::DirNode *node = new systemstate::DirNode("/", nullptr);
 
   struct dirent **namelist;

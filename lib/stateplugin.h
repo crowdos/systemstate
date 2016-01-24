@@ -12,6 +12,12 @@ class FileNode;
 class DirNode;
 class Plugin;
 
+class Listener {
+public:
+  virtual ~Listener() {}
+  virtual void dataChanged(const std::string& data) = 0;
+};
+
 class Node {
 public:
   typedef enum {
@@ -40,16 +46,16 @@ public:
   Node::NodeType type() const { return Node::File; }
   systemstate::Plugin *plugin() const { return m_plugin; }
   uint64_t version() const { return m_version; }
-  void addListener(std::function<void()> *func);
-  void removeListener(std::function<void()> *func);
+  void addListener(Listener *listener);
+  void removeListener(Listener *listener);
   bool open();
   void close();
 
 protected:
-  void dataChanged();
+  void dataChanged(const std::string& data);
 
 private:
-  std::list<std::function<void()> *> m_listeners;
+  std::list<Listener *> m_listeners;
   int m_open;
   uint64_t m_version;
   Plugin *m_plugin;

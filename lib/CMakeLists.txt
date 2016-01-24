@@ -1,3 +1,5 @@
+include_directories(../cereal/include/)
+
 add_library(systemstate SHARED
   utils.cpp
   stateplugin.cpp

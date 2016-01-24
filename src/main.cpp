@@ -8,7 +8,7 @@ int
 main(int argc, char *argv[]) {
   PluginLoader loader;
 
-  systemstate::Node *root = loader.loadPlugins();
+  systemstate::DirNode *root = loader.loadPlugins();
 
   boost::asio::io_service service;
 

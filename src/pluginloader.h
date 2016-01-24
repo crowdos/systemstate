@@ -4,7 +4,7 @@
 #include <list>
 
 namespace systemstate {
-  class Node;
+  class DirNode;
 };
 
 class PluginData;
@@ -14,7 +14,7 @@ public:
   PluginLoader();
   ~PluginLoader();
 
-  systemstate::Node *loadPlugins();
+  systemstate::DirNode *loadPlugins();
 
 private:
   std::list<PluginData *> m_plugins;
