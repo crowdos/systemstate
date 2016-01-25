@@ -3,12 +3,12 @@ find_package(Boost REQUIRED system)
 include_directories(${Boost_INCLUDE_DIRS})
 include_directories(../lib)
 
-add_executable(systemstate-get
+add_executable(systemstate-read
   common.cpp
-  get.cpp
+  read.cpp
   )
-target_link_libraries(systemstate-get systemstate ${Boost_LIBRARIES})
-install(TARGETS systemstate-get DESTINATION /usr/bin)
+target_link_libraries(systemstate-read systemstate ${Boost_LIBRARIES})
+install(TARGETS systemstate-read DESTINATION /usr/bin)
 
 add_executable(systemstate-ls
   common.cpp
