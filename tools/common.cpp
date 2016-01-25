@@ -1,10 +1,12 @@
 #include "common.h"
 #include "utils.h"
 #include <iostream>
+#include <boost/bind.hpp>
 
 Connection::Connection() :
   m_ep(Utils::getAddress()),
-  m_socket(m_service) {
+  m_socket(m_service),
+  m_len(0) {
 
 }
 
@@ -52,4 +54,37 @@ void Connection::disconnect() {
   } catch (...) {
     // We don't care.
   }
+}
+
+void Connection::run(std::function<void(const Response&)> func) {
+  m_func = func;
+
+  read_packet();
+
+  m_service.run();
+}
+
+void Connection::read_packet() {
+  m_socket.async_receive(boost::asio::buffer(&m_len, 4),
+			 boost::bind(&Connection::handle_read_packet, this,
+				     boost::asio::placeholders::error));
+}
+
+void Connection::handle_read_packet(const boost::system::error_code& error) {
+  uint32_t len = ntohl(m_len);
+
+  char buff[len];
+  try {
+    m_socket.receive(boost::asio::buffer(&buff, len));
+  } catch (std::exception& ex) {
+    std::cerr << "Failed to read: " << ex.what() << std::endl;
+    read_packet();
+    return;
+  }
+
+  Response r = Response::fromData(std::string(buff, len));
+
+  m_func(r);
+
+  read_packet();
 }

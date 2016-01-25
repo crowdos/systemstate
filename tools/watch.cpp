@@ -22,10 +22,23 @@ main(int argc, char *argv[]) {
     return 1;
   }
 
-  // TODO:
   // Read
+  r = c.send(Read, argv[1]);
+  if (r.op() != Read) {
+    c.send(Unsubscribe, argv[1]);
+    c.send(Disconnect, std::string());
+    c.disconnect();
+    return 1;
+  }
+
+  std::cout << r.value() << std::endl;
 
   // follow and run loop
+  c.run([] (const Response& r) {
+      if (r.op() == Notify) {
+	std::cout << r.value() << std::endl;
+      }
+    });
 
 
   c.send(Unsubscribe, argv[1]);
