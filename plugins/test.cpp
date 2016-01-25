@@ -54,8 +54,10 @@ class TestPlugin : public Plugin {
   void stop(const FileNode *node);
   ssize_t size(const FileNode *node);
   bool read(const FileNode *node, std::string& data);
+  bool write(FileNode *node, const std::string& data);
 
   Counter m_counter;
+  std::string m_data;
 };
 
 void TestPlugin::init(DirNode *root) {
@@ -63,6 +65,7 @@ void TestPlugin::init(DirNode *root) {
   DirNode *d = root->appendDir("Test");
   d->appendFile("test", this);
   d->appendFile("counter", this);
+  m_data = "test_data";
 }
 
 bool TestPlugin::start(const FileNode *node) {
@@ -87,9 +90,18 @@ bool TestPlugin::read(const FileNode *node, std::string& data) {
   if (node->name() == "counter") {
     data = m_counter.value();
   } else {
-    data = "t";
+    data = m_data;
   }
 
+  return true;
+}
+
+bool TestPlugin::write(FileNode *node, const std::string& data) {
+  if (node->name() == "counter") {
+    return false;
+  }
+
+  m_data = data;
   return true;
 }
 

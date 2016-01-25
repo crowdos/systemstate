@@ -32,6 +32,7 @@ private:
   void shutdown();
 
   Response read(const Request& req);
+  Response write(const Request& req);
   Response list(const Request& req);
   Response error(const Request& req);
   Response subscribe(Session *session, const Request& req);

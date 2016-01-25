@@ -5,7 +5,7 @@
 #include <cereal/archives/binary.hpp>
 
 template<class Archive> void Request::serialize(Archive& archive) {
-  archive(m_op, m_path);
+  archive(m_op, m_path, m_value);
 }
 
 std::string Request::data() const {

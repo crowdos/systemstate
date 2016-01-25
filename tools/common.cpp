@@ -27,9 +27,9 @@ bool Connection::connect() {
   return true;
 }
 
-Response Connection::send(const Op& op, const std::string& path) {
+Response Connection::send(const Op& op, const std::string& path, const std::string& value) {
   try {
-    Request req(op, path);
+    Request req(op, path, value);
     std::string data = req.data();
     uint32_t size = htonl(data.size());
     m_socket.send(boost::asio::buffer(&size, 4));

@@ -11,7 +11,7 @@ public:
 
   bool connect();
 
-  Response send(const Op& op, const std::string& path);
+  Response send(const Op& op, const std::string& path, const std::string& value = std::string());
 
   void disconnect();
 

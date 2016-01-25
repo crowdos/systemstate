@@ -97,6 +97,7 @@ public:
 
   virtual ssize_t size(const FileNode *node) = 0;
   virtual bool read(const FileNode *node, std::string& data) = 0;
+  virtual bool write(FileNode *node, const std::string& data) = 0;
 
 protected:
   Plugin();

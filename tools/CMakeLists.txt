@@ -10,6 +10,13 @@ add_executable(systemstate-read
 target_link_libraries(systemstate-read systemstate ${Boost_LIBRARIES})
 install(TARGETS systemstate-read DESTINATION /usr/bin)
 
+add_executable(systemstate-write
+  common.cpp
+  write.cpp
+  )
+target_link_libraries(systemstate-write systemstate ${Boost_LIBRARIES})
+install(TARGETS systemstate-write DESTINATION /usr/bin)
+
 add_executable(systemstate-ls
   common.cpp
   ls.cpp

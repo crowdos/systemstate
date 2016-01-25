@@ -22,14 +22,17 @@ class Request {
 public:
   Request(const Request& other) :
     m_op(other.m_op),
-    m_path(other.m_path) {}
+    m_path(other.m_path),
+    m_value(other.m_value) {}
 
-  Request(const Op& op, const std::string& path = std::string()) :
+  Request(const Op& op, const std::string& path, const std::string& value = std::string()) :
     m_op(op),
-    m_path(path) {}
+    m_path(path),
+    m_value(value) {}
 
   const std::string& path() const { return m_path; }
   const Op& op() const { return m_op; }
+  const std::string& value() const { return m_value; }
 
   template<class Archive> void serialize(Archive& archive);
 
@@ -42,6 +45,7 @@ private:
 
   Op m_op;
   std::string m_path;
+  std::string m_value;
 };
 
 class Response {

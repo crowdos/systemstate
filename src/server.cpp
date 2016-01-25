@@ -280,7 +280,7 @@ Response Server::handleRequest(Session *session, const Request& request) {
     break;
 
   case Write:
-    return error(request); // TODO:
+    return write(request);
 
   case Subscribe:
     return subscribe(session, request);
@@ -314,6 +314,28 @@ Response Server::read(const Request& req) {
   }
 
   Response r(Read, req.path(), data);
+  f->close();
+  return r;
+}
+
+Response Server::write(const Request& req) {
+  const Node *node = findNode(req.path());
+
+  if (!node || node->type() != Node::File) {
+    return error(req);
+  }
+
+  FileNode *f = dynamic_cast<FileNode *>(const_cast<Node *>(node));
+  if (!f->open()) {
+    return error(req);
+  }
+
+  if (!f->plugin()->write(f, req.value())) {
+    f->close();
+    return error(req);
+  }
+
+  Response r(Write, req.path(), req.value());
   f->close();
   return r;
 }
