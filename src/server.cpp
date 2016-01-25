@@ -44,23 +44,23 @@ public:
   void removeNode(FileNode *node, const std::string& path);
 
   bool sendResponse(const Response& s) {
-    // TODO: cleanup, clarify when we delete ourselves and use this function
     std::string data = s.data();
     uint32_t size = htonl(data.size());
     try {
       m_socket.send(boost::asio::buffer(&size, 4));
       m_socket.send(boost::asio::buffer(data));
     } catch (std::exception& ex) {
-      if (s.op() != Disconnect) {
-	std::cerr << "Error sending response: " << ex.what();
-      } else {
-	close();
-      }
-
+      std::cerr << "Error sending response: " << ex.what();
       return false;
     }
 
     return true;
+  }
+
+  void close() {
+    m_socket.cancel();
+    m_socket.close();
+    m_server->removeSession(this);
   }
 
 private:
@@ -84,32 +84,12 @@ private:
     m_socket.receive(boost::asio::buffer(&buff, len));
     Request r = Request::fromData(std::string(buff, len));
     Response s = m_server->handleRequest(this, r);
-    std::string data = s.data();
-    uint32_t size = htonl(data.size());
-    try {
-      m_socket.send(boost::asio::buffer(&size, 4));
-      m_socket.send(boost::asio::buffer(data));
-    } catch (std::exception& ex) {
-      if (r.op() != Disconnect) {
-	std::cerr << "Error sending response: " << ex.what();
-      } else {
-	close();
-	return;
-      }
-    }
 
-    if (r.op() == Disconnect) {
+    if (!sendResponse(s) || s.op() == Disconnect) {
       close();
-      return;
     } else {
       read_packet();
     }
-  }
-
-  void close() {
-    m_socket.cancel();
-    m_socket.close();
-    m_server->removeSession(this);
   }
 
   Server *m_server;
@@ -142,7 +122,9 @@ public:
 private:
   void dataChanged(const std::string& data) {
     Response s(Notify, m_path, data);
-    m_session->sendResponse(s);
+    if (!m_session->sendResponse(s)) {
+      m_session->close();
+    }
   }
 
   Session *m_session;
