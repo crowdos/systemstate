@@ -1,3 +1,4 @@
+#include <iostream>
 #include <boost/asio.hpp>
 #include "pluginloader.h"
 #include "server.h"
