@@ -125,15 +125,19 @@ public:
     m_session(session),
     m_path(path),
     m_node(node) {
+
+    if (!m_node->open()) {
+      throw std::logic_error("Failed to open node");
+    }
+
     m_node->addListener(this);
   }
 
   ~FileNodeListener() {
     m_node->removeListener(this);
+    m_node->close();
     m_node = nullptr;
   }
-
-  FileNode *node() { return m_node; }
 
 private:
   void dataChanged(const std::string& data) {
@@ -155,9 +159,6 @@ Session::~Session() {
     FileNodeListener *listener = iter->second;
     m_listeners.erase(iter);
 
-    // Unsubscribe:
-    listener->node()->close();
-
     delete listener;
   }
 }
@@ -167,8 +168,12 @@ bool Session::addNode(FileNode *node, const std::string& path) {
     return false;
   }
 
-  FileNodeListener *listener = new FileNodeListener(this, path, node);
-  m_listeners.insert(std::make_pair(path, listener));
+  try {
+    FileNodeListener *listener = new FileNodeListener(this, path, node);
+    m_listeners.insert(std::make_pair(path, listener));
+  } catch (...) {
+    return false;
+  }
 
   return true;
 }
@@ -356,12 +361,7 @@ Response Server::subscribe(Session *session, const Request& req) {
   }
 
   FileNode *f = dynamic_cast<FileNode *>(const_cast<Node *>(n));
-  if (!f->open()) {
-    return error(req);
-  }
-
   if (!session->addNode(f, req.path())) {
-    f->close();
     return error(req);
   }
 
@@ -375,7 +375,6 @@ Response Server::unsubscribe(Session *session, const Request& req) {
   }
 
   FileNode *f = dynamic_cast<FileNode *>(const_cast<Node *>(n));
-  f->close();
 
   session->removeNode(f, req.path());
 
