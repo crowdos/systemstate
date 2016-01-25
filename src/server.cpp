@@ -133,6 +133,8 @@ public:
     m_node = nullptr;
   }
 
+  FileNode *node() { return m_node; }
+
 private:
   void dataChanged(const std::string& data) {
     Response s(Notify, m_path, data);

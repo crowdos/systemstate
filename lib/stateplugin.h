@@ -41,7 +41,7 @@ private:
 class FileNode : public Node {
 public:
   FileNode(const std::string& name, DirNode *parent, Plugin *plugin);
-  ~FileNode();
+  virtual ~FileNode();
 
   Node::NodeType type() const { return Node::File; }
   systemstate::Plugin *plugin() const { return m_plugin; }
@@ -64,7 +64,7 @@ private:
 class DirNode : public Node {
 public:
   DirNode(const std::string& name, DirNode *parent);
-  ~DirNode();
+  virtual ~DirNode();
 
   Node::NodeType type() const { return Node::Dir; }
 
