@@ -9,7 +9,6 @@ using namespace systemstate;
 class Counter {
 public:
   bool start(const FileNode *node) {
-    std::cerr << __PRETTY_FUNCTION__ << std::endl;
     m_value = 0;
     m_running = true;
     m_thread = std::thread([this, node]() {
@@ -75,7 +74,6 @@ bool TestPlugin::start(const FileNode *node) {
 }
 
 void TestPlugin::stop(const FileNode *node) {
-    std::cerr << __PRETTY_FUNCTION__ << std::endl;
   if (node->name() == "counter") {
     m_counter.stop();
   }
