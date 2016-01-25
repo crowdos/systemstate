@@ -264,6 +264,9 @@ const systemstate::Node *Server::findNode(const systemstate::Node *node, const s
 
 Response Server::handleRequest(Session *session, const Request& request) {
   switch (request.op()) {
+  case Ping:
+    return Response(Ping, request.path());
+
   case Error:
   case Notify:
     return error(request);

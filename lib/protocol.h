@@ -7,7 +7,8 @@
 #include <list>
 
 typedef enum {
-  Error = 0,
+  Error = -1,
+  Ping = 0,
   List,
   Read,
   Write,

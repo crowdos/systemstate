@@ -23,3 +23,10 @@ add_executable(systemstate-watch
   )
 target_link_libraries(systemstate-watch systemstate ${Boost_LIBRARIES})
 install(TARGETS systemstate-watch DESTINATION /usr/bin)
+
+add_executable(systemstate-ping
+  common.cpp
+  ping.cpp
+  )
+target_link_libraries(systemstate-ping systemstate ${Boost_LIBRARIES})
+install(TARGETS systemstate-ping DESTINATION /usr/bin)
