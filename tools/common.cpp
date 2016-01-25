@@ -78,7 +78,7 @@ void Connection::handle_read_packet(const boost::system::error_code& error) {
     m_socket.receive(boost::asio::buffer(&buff, len));
   } catch (std::exception& ex) {
     std::cerr << "Failed to read: " << ex.what() << std::endl;
-    read_packet();
+    m_service.stop();
     return;
   }
 
