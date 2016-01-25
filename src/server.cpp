@@ -152,6 +152,10 @@ Session::~Session() {
 
     FileNodeListener *listener = iter->second;
     m_listeners.erase(iter);
+
+    // Unsubscribe:
+    listener->node()->close();
+
     delete listener;
   }
 }
