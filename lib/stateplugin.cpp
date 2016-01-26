@@ -89,6 +89,13 @@ DirNode::~DirNode() {
 }
 
 DirNode *DirNode::appendDir(const std::string& name) {
+  for (int x = 0; x < numberOfChildren(); x++) {
+    const Node *n = childAt(x);
+    if (n->name() == name && n->type() == Dir) {
+      return dynamic_cast<DirNode *>(const_cast<Node *>(n));
+    }
+  }
+
   DirNode *node = new DirNode(name, this);
 
   m_children.push_back(node);
