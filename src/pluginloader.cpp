@@ -12,11 +12,42 @@ typedef systemstate::Plugin *(*__init)();
 
 class PluginData {
 public:
-  systemstate::Plugin *plugin;
-  void *handle;
+  PluginData() : m_handle(nullptr) { }
+
+  ~PluginData() { unload(); }
+
+  void unload() {
+    if (m_handle) {
+      dlclose(m_handle);
+      m_handle = nullptr;
+    }
+  }
+
+  bool load(const std::string& name, systemstate::DirNode *node) {
+    m_handle = dlopen(name.c_str(), RTLD_LAZY);
+    if (!m_handle) {
+      return false;
+    }
+
+    __init init = (__init)dlsym(m_handle, "__init");
+    if (!init) {
+      return false;
+    }
+
+    m_plugin = init();
+
+    m_plugin->init(node);
+
+    return true;
+  }
+
+private:
+  systemstate::Plugin *m_plugin;
+  void *m_handle;
 };
 
 PluginLoader::PluginLoader() {
+
 }
 
 PluginLoader::~PluginLoader() {
@@ -46,22 +77,10 @@ systemstate::DirNode *PluginLoader::loadPlugins() {
   for (int x = 0; x < len; x++) {
     std::stringstream s;
     s << PLUGINS_DIR << "/" << namelist[x]->d_name;
-    void *handle = dlopen(s.str().c_str(), RTLD_LAZY);
-    if (!handle) {
+    std::shared_ptr<PluginData> data = std::make_shared<PluginData>();
+    if (!data->load(s.str(), node)) {
       continue;
     }
-
-    __init init = (__init)dlsym(handle, "__init");
-    if (!init) {
-      dlclose(handle);
-      continue;
-    }
-
-    PluginData *data = new PluginData;
-    data->handle = handle;
-    data->plugin = init();
-
-    data->plugin->init(node);
 
     m_plugins.push_back(data);
   }

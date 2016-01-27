@@ -2,6 +2,7 @@
 #define PLUGIN_LOADER_H
 
 #include <list>
+#include <memory>
 
 namespace systemstate {
   class DirNode;
@@ -17,7 +18,7 @@ public:
   systemstate::DirNode *loadPlugins();
 
 private:
-  std::list<PluginData *> m_plugins;
+  std::list<std::shared_ptr<PluginData >> m_plugins;
 };
 
 #endif /* PLUGIN_LOADER_H */
