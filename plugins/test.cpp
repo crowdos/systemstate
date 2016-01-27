@@ -52,7 +52,6 @@ class TestPlugin : public Plugin {
   void init(DirNode *root);
   bool start(const FileNode *node);
   void stop(const FileNode *node);
-  ssize_t size(const FileNode *node);
   bool read(const FileNode *node, std::string& data);
   bool write(FileNode *node, const std::string& data);
 
@@ -80,10 +79,6 @@ void TestPlugin::stop(const FileNode *node) {
   if (node->name() == "counter") {
     m_counter.stop();
   }
-}
-
-ssize_t TestPlugin::size(const FileNode *node) {
-  return 0;
 }
 
 bool TestPlugin::read(const FileNode *node, std::string& data) {
