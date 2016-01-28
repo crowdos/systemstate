@@ -1,5 +1,4 @@
 #include <iostream>
-#include <boost/asio.hpp>
 #include "pluginloader.h"
 #include "server.h"
 #include "utils.h"
@@ -22,12 +21,10 @@ main(int argc, char *argv[]) {
 
   systemstate::RootNode *root = loader.loadPlugins(argv[1]);
 
-  boost::asio::io_service service;
-
   try {
     std::string path(Utils::getAddress());
     ::unlink(path.c_str());
-    Server server(path, service, root);
+    Server server(path, root);
     server.start();
     return server.loop();
   } catch (std::exception& ex) {

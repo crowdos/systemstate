@@ -173,9 +173,7 @@ void Session::removeNode(FileNode *node, const std::string& path) {
 
 // TODO: We do not check whether another server is already running or not.
 // I am nit aware of any race-free way to do it.
-Server::Server(const std::string& path, boost::asio::io_service& service,
-	       systemstate::RootNode *root) :
-  m_service(service),
+Server::Server(const std::string& path, systemstate::RootNode *root) :
   m_root(root),
   m_ep(boost::asio::local::stream_protocol::endpoint(path)),
   m_acceptor(boost::asio::local::stream_protocol::acceptor(m_service, m_ep))

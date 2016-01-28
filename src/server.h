@@ -14,7 +14,7 @@ class Session;
 
 class Server {
 public:
-  Server(const std::string& path, boost::asio::io_service& service, systemstate::RootNode *root);
+  Server(const std::string& path, systemstate::RootNode *root);
   ~Server();
 
   void start();
@@ -38,7 +38,7 @@ private:
   Response unsubscribe(Session *session, const Request& req);
 
   systemstate::RootNode *m_root;
-  boost::asio::io_service& m_service;
+  boost::asio::io_service m_service;
   boost::asio::local::stream_protocol::endpoint m_ep;
   boost::asio::local::stream_protocol::acceptor m_acceptor;
 
