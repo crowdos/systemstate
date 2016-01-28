@@ -238,6 +238,13 @@ const systemstate::Node *Server::findNode(const std::string& path) {
     }
   }
 
+
+  assert(node != m_root);
+
+  if (node == m_root) {
+    return nullptr;
+  }
+
   return node;
 }
 
