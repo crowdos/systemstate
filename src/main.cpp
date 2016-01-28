@@ -17,14 +17,12 @@ main(int argc, char *argv[]) {
 
   db.scan(argv[1]);
 
-  PluginLoader loader;
-
-  systemstate::RootNode *root = loader.loadPlugins(argv[1]);
+  PluginLoader loader(db, argv[1]);
 
   try {
     std::string path(Utils::getAddress());
     ::unlink(path.c_str());
-    Server server(path, root);
+    Server server(path, loader);
     server.start();
     return server.loop();
   } catch (std::exception& ex) {

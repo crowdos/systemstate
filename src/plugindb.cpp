@@ -4,6 +4,7 @@
 #include <boost/property_tree/ini_parser.hpp>
 #include <boost/tokenizer.hpp>
 #include <unordered_set>
+#include <map>
 #include <cstring>
 #include <dirent.h>
 
@@ -26,17 +27,22 @@ public:
 
   }
 
-  bool match(const std::string& path) const {
-    if (match(path, m_files)) {
-      return true;
-    }
+  bool matchFiles(const std::string& path) const {
+    return m_files.find(path) != m_files.end();
+  }
 
+  int matchDirs(const std::string& path) const {
     std::size_t pos = path.find_last_of(".");
     if (pos == std::string::npos) {
       return false;
     }
 
-    return match(path.substr(0, pos), m_dirs);
+    auto iter = m_dirs.find(path.substr(0, pos));
+    if (iter == m_dirs.end()) {
+      return 0;
+    }
+
+    return (*iter).size();
   }
 
   const std::string& name() const { return m_name; }
@@ -55,10 +61,6 @@ private:
     }
 
     return std::move(tokens);
-  }
-
-  bool match(const std::string& path, const std::unordered_set<std::string>& paths) const {
-    return paths.find(path) != paths.end();
   }
 
   const std::string m_name;
@@ -122,8 +124,21 @@ void PluginDb::scan(const std::string& path) {
 std::string PluginDb::lookUp(const std::string& path) {
   auto iter = std::find_if(m_data.begin(), m_data.end(),
 			   [&path](const std::shared_ptr<Data>& data)->bool{
-			     return data->match(path);
+			     return data->matchFiles(path);
 			   });
 
-  return iter == m_data.end() ? std::string() : (*iter)->name();
+  if (iter != m_data.end()) {
+    return (*iter)->name();
+  }
+
+  std::map<int, std::string> map;
+
+  for (auto iter : m_data) {
+    int s = iter->matchDirs(path);
+    if (s > 0) {
+      map.insert(std::make_pair(s, iter->name()));
+    }
+  }
+
+  return map.empty() ? std::string() : map.rbegin()->second;
 }

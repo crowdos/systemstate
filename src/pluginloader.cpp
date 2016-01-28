@@ -1,8 +1,7 @@
 #include "pluginloader.h"
 #include "stateplugin.h"
+#include "plugindb.h"
 #include <iostream>
-#include <dirent.h>
-#include <cstring>
 #include <sstream>
 #include <dlfcn.h>
 
@@ -46,50 +45,36 @@ private:
   void *m_handle;
 };
 
-PluginLoader::PluginLoader() {
+PluginLoader::PluginLoader(PluginDb& db, const std::string& path) :
+  m_root(new systemstate::RootNode),
+  m_db(db),
+  m_path(path) {
 
 }
 
 PluginLoader::~PluginLoader() {
-
+  delete m_root;
+  m_root = nullptr;
 }
 
-systemstate::RootNode *PluginLoader::loadPlugins(const std::string& path) {
-  systemstate::RootNode *node = new systemstate::RootNode;
+systemstate::RootNode *PluginLoader::rootNode() {
+  return m_root;
+}
 
-  struct dirent **namelist;
-  int len = scandir(path.c_str(), &namelist, [](const struct dirent *entry) -> int {
-      std::string d(entry->d_name);
-      // return non zero to keep the entries.
-      try {
-	return d.compare(d.size() - 3, 3, ".so") == 0 ? 1 : 0;
-      } catch (...) {
-	// Discard.
-	return 0;
-      }
-    }, alphasort);
-
-  if (len == -1) {
-    std::cerr << "scandir() failed: " << std::strerror(errno) << std::endl;
-    return node;
+bool PluginLoader::load(const std::string& path) {
+  std::string id = m_db.lookUp(path);
+  if (id.empty()) {
+    return false;
   }
 
-  for (int x = 0; x < len; x++) {
-    std::stringstream s;
-    s << path << "/" << namelist[x]->d_name;
-    std::shared_ptr<PluginData> data = std::make_shared<PluginData>();
-    if (!data->load(s.str(), node)) {
-      continue;
-    }
-
-    m_plugins.push_back(data);
+  std::stringstream s;
+  s << m_path << "/lib" << id << ".so";
+  std::shared_ptr<PluginData> data = std::make_shared<PluginData>();
+  if (!data->load(s.str(), m_root)) {
+    return false;
   }
 
-  while (len--) {
-    free(namelist[len]);
-  }
+  m_plugins.push_back(data);
 
-  free(namelist);
-
-  return node;
+  return true;
 }

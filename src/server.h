@@ -8,13 +8,15 @@
 
 namespace systemstate {
   class RootNode;
+  class Node;
 };
 
 class Session;
+class PluginLoader;
 
 class Server {
 public:
-  Server(const std::string& path, systemstate::RootNode *root);
+  Server(const std::string& path, PluginLoader& loader);
   ~Server();
 
   void start();
@@ -29,6 +31,7 @@ public:
 
 private:
   void shutdown();
+  const systemstate::Node *findNode(const std::string& path);
 
   Response read(const Request& req);
   Response write(const Request& req);
@@ -37,7 +40,7 @@ private:
   Response subscribe(Session *session, const Request& req);
   Response unsubscribe(Session *session, const Request& req);
 
-  systemstate::RootNode *m_root;
+  PluginLoader& m_loader;
   boost::asio::io_service m_service;
   boost::asio::local::stream_protocol::endpoint m_ep;
   boost::asio::local::stream_protocol::acceptor m_acceptor;

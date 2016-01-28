@@ -1,6 +1,7 @@
 #include <iostream>
 #include "server.h"
 #include "stateplugin.h"
+#include "pluginloader.h"
 #include <arpa/inet.h>
 #include <boost/bind.hpp>
 
@@ -173,8 +174,8 @@ void Session::removeNode(FileNode *node, const std::string& path) {
 
 // TODO: We do not check whether another server is already running or not.
 // I am nit aware of any race-free way to do it.
-Server::Server(const std::string& path, systemstate::RootNode *root) :
-  m_root(root),
+Server::Server(const std::string& path, PluginLoader& loader) :
+  m_loader(loader),
   m_ep(boost::asio::local::stream_protocol::endpoint(path)),
   m_acceptor(boost::asio::local::stream_protocol::acceptor(m_service, m_ep))
 {
@@ -215,6 +216,20 @@ void Server::shutdown() {
   }
 }
 
+const systemstate::Node *Server::findNode(const std::string& path) {
+  const Node *node = m_loader.rootNode()->findNode(path);
+  if (node) {
+    return node;
+  }
+
+  // Find the plugin and load it:
+  if (!m_loader.load(path)) {
+    return nullptr;
+  }
+
+  return m_loader.rootNode()->findNode(path);
+}
+
 Response Server::handleRequest(Session *session, const Request& request) {
   switch (request.op()) {
   case Ping:
@@ -249,7 +264,7 @@ Response Server::handleRequest(Session *session, const Request& request) {
 }
 
 Response Server::read(const Request& req) {
-  const Node *node = m_root->findNode(req.path());
+  const Node *node = findNode(req.path());
 
   if (!node || node->type() != Node::File) {
     return error(req);
@@ -272,7 +287,7 @@ Response Server::read(const Request& req) {
 }
 
 Response Server::write(const Request& req) {
-  const Node *node = m_root->findNode(req.path());
+  const Node *node = findNode(req.path());
 
   if (!node || node->type() != Node::File) {
     return error(req);
@@ -294,7 +309,7 @@ Response Server::write(const Request& req) {
 }
 
 Response Server::list(const Request& req) {
-  const Node *node = m_root->findNode(req.path());
+  const Node *node = findNode(req.path());
 
   if (!node || node->type() != Node::Dir) {
     return error(req);
@@ -315,7 +330,7 @@ Response Server::error(const Request& req) {
 }
 
 Response Server::subscribe(Session *session, const Request& req) {
-  const Node *n = m_root->findNode(req.path());
+  const Node *n = findNode(req.path());
   if (!n || n->type() != Node::File) {
     return error(req);
   }
@@ -329,7 +344,7 @@ Response Server::subscribe(Session *session, const Request& req) {
 }
 
 Response Server::unsubscribe(Session *session, const Request& req) {
-  const Node *n = m_root->findNode(req.path());
+  const Node *n = findNode(req.path());
   if (!n || n->type() != Node::File) {
     return error(req);
   }
