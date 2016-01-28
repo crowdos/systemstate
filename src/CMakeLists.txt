@@ -6,6 +6,7 @@ include_directories(../lib)
 add_executable(systemstated
   main.cpp
   pluginloader.cpp
+  plugindb.cpp
   server.cpp
   )
 target_link_libraries(systemstated systemstate dl ${Boost_LIBRARIES})

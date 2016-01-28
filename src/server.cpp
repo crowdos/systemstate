@@ -2,7 +2,7 @@
 #include "server.h"
 #include "stateplugin.h"
 #include <arpa/inet.h>
-#include<boost/tokenizer.hpp>
+#include <boost/tokenizer.hpp>
 #include <boost/bind.hpp>
 
 using namespace systemstate;

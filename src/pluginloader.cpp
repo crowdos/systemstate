@@ -6,8 +6,6 @@
 #include <sstream>
 #include <dlfcn.h>
 
-#define PLUGINS_DIR "plugins"
-
 typedef systemstate::Plugin *(*__init)();
 
 class PluginData {
@@ -26,11 +24,13 @@ public:
   bool load(const std::string& name, systemstate::DirNode *node) {
     m_handle = dlopen(name.c_str(), RTLD_LAZY);
     if (!m_handle) {
+      std::cerr << "Failed to load " << name << ": " << dlerror() << std::endl;
       return false;
     }
 
     __init init = (__init)dlsym(m_handle, "__init");
     if (!init) {
+      std::cerr << "Failed to find __init symbol" << std::endl;
       return false;
     }
 
@@ -54,11 +54,11 @@ PluginLoader::~PluginLoader() {
 
 }
 
-systemstate::DirNode *PluginLoader::loadPlugins() {
+systemstate::DirNode *PluginLoader::loadPlugins(const std::string& path) {
   systemstate::DirNode *node = new systemstate::DirNode("/", nullptr);
 
   struct dirent **namelist;
-  int len = scandir(PLUGINS_DIR, &namelist, [](const struct dirent *entry) -> int {
+  int len = scandir(path.c_str(), &namelist, [](const struct dirent *entry) -> int {
       std::string d(entry->d_name);
       // return non zero to keep the entries.
       try {
@@ -76,7 +76,7 @@ systemstate::DirNode *PluginLoader::loadPlugins() {
 
   for (int x = 0; x < len; x++) {
     std::stringstream s;
-    s << PLUGINS_DIR << "/" << namelist[x]->d_name;
+    s << path << "/" << namelist[x]->d_name;
     std::shared_ptr<PluginData> data = std::make_shared<PluginData>();
     if (!data->load(s.str(), node)) {
       continue;

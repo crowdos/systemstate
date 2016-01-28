@@ -5,3 +5,4 @@ function(state_plugin ...)
 endfunction(state_plugin)
 
 state_plugin(testplugin test.cpp)
+state_plugin(testplugin2 test2.cpp)

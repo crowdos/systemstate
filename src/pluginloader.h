@@ -15,7 +15,7 @@ public:
   PluginLoader();
   ~PluginLoader();
 
-  systemstate::DirNode *loadPlugins();
+  systemstate::DirNode *loadPlugins(const std::string& path);
 
 private:
   std::list<std::shared_ptr<PluginData >> m_plugins;
