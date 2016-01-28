@@ -8,6 +8,8 @@ using namespace systemstate;
 
 class Counter {
 public:
+  Counter() : m_running(false) {}
+
   bool start(const FileNode *node) {
     m_value = 0;
     m_running = true;
