@@ -2,7 +2,6 @@
 #include "server.h"
 #include "stateplugin.h"
 #include <arpa/inet.h>
-#include <boost/tokenizer.hpp>
 #include <boost/bind.hpp>
 
 using namespace systemstate;
@@ -175,7 +174,7 @@ void Session::removeNode(FileNode *node, const std::string& path) {
 // TODO: We do not check whether another server is already running or not.
 // I am nit aware of any race-free way to do it.
 Server::Server(const std::string& path, boost::asio::io_service& service,
-	       systemstate::DirNode *root) :
+	       systemstate::RootNode *root) :
   m_service(service),
   m_root(root),
   m_ep(boost::asio::local::stream_protocol::endpoint(path)),
@@ -218,57 +217,6 @@ void Server::shutdown() {
   }
 }
 
-const systemstate::Node *Server::findNode(const std::string& path) {
-  boost::char_separator<char> sep(".");
-  boost::tokenizer<boost::char_separator<char> > tok(path, sep);
-
-  std::list<std::string> tokens;
-
-  for (auto iter = tok.begin(); iter != tok.end(); iter++) {
-    tokens.push_back(*iter);
-  }
-
-  const Node *node = m_root;
-  while (!tokens.empty()) {
-    std::string token = tokens.front();
-    tokens.pop_front();
-    node = findNode(node, token);
-    if (!node) {
-      return nullptr;
-    }
-  }
-
-
-  assert(node != m_root);
-
-  if (node == m_root) {
-    return nullptr;
-  }
-
-  return node;
-}
-
-const systemstate::Node *Server::findNode(const systemstate::Node *node, const std::string& name) {
-  if (node->type() != Node::Dir) {
-    if (node->name() == name) {
-      return node;
-    }
-
-    return nullptr;
-  }
-
-  const DirNode *d = dynamic_cast<const DirNode *>(node);
-
-  for (int x = 0; x < d->numberOfChildren(); x++) {
-    const Node *n = d->childAt(x);
-    if (n->name() == name) {
-      return n;
-    }
-  }
-
-  return nullptr;
-}
-
 Response Server::handleRequest(Session *session, const Request& request) {
   switch (request.op()) {
   case Ping:
@@ -303,7 +251,7 @@ Response Server::handleRequest(Session *session, const Request& request) {
 }
 
 Response Server::read(const Request& req) {
-  const Node *node = findNode(req.path());
+  const Node *node = m_root->findNode(req.path());
 
   if (!node || node->type() != Node::File) {
     return error(req);
@@ -326,7 +274,7 @@ Response Server::read(const Request& req) {
 }
 
 Response Server::write(const Request& req) {
-  const Node *node = findNode(req.path());
+  const Node *node = m_root->findNode(req.path());
 
   if (!node || node->type() != Node::File) {
     return error(req);
@@ -348,7 +296,7 @@ Response Server::write(const Request& req) {
 }
 
 Response Server::list(const Request& req) {
-  const Node *node = findNode(req.path());
+  const Node *node = m_root->findNode(req.path());
 
   if (!node || node->type() != Node::Dir) {
     return error(req);
@@ -369,7 +317,7 @@ Response Server::error(const Request& req) {
 }
 
 Response Server::subscribe(Session *session, const Request& req) {
-  const Node *n = findNode(req.path());
+  const Node *n = m_root->findNode(req.path());
   if (!n || n->type() != Node::File) {
     return error(req);
   }
@@ -383,7 +331,7 @@ Response Server::subscribe(Session *session, const Request& req) {
 }
 
 Response Server::unsubscribe(Session *session, const Request& req) {
-  const Node *n = findNode(req.path());
+  const Node *n = m_root->findNode(req.path());
   if (!n || n->type() != Node::File) {
     return error(req);
   }

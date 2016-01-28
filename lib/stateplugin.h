@@ -61,7 +61,7 @@ private:
   Plugin *m_plugin;
 };
 
-class DirNode : public Node {
+class DirNode : public Node, protected std::list<Node *> {
 public:
   DirNode(const std::string& name, DirNode *parent);
   virtual ~DirNode();
@@ -84,6 +84,15 @@ public:
 
 private:
   std::deque<Node *> m_children;
+};
+
+class RootNode : public DirNode {
+public:
+  RootNode();
+  const FileNode *findNode(const std::string& path);
+
+private:
+  const Node *findNode(const Node *node, const std::string& name);
 };
 
 class Plugin {

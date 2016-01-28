@@ -20,7 +20,7 @@ main(int argc, char *argv[]) {
 
   PluginLoader loader;
 
-  systemstate::DirNode *root = loader.loadPlugins(argv[1]);
+  systemstate::RootNode *root = loader.loadPlugins(argv[1]);
 
   boost::asio::io_service service;
 

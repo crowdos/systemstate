@@ -54,8 +54,8 @@ PluginLoader::~PluginLoader() {
 
 }
 
-systemstate::DirNode *PluginLoader::loadPlugins(const std::string& path) {
-  systemstate::DirNode *node = new systemstate::DirNode("/", nullptr);
+systemstate::RootNode *PluginLoader::loadPlugins(const std::string& path) {
+  systemstate::RootNode *node = new systemstate::RootNode;
 
   struct dirent **namelist;
   int len = scandir(path.c_str(), &namelist, [](const struct dirent *entry) -> int {

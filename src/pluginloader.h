@@ -5,7 +5,7 @@
 #include <memory>
 
 namespace systemstate {
-  class DirNode;
+  class RootNode;
 };
 
 class PluginData;
@@ -15,7 +15,7 @@ public:
   PluginLoader();
   ~PluginLoader();
 
-  systemstate::DirNode *loadPlugins(const std::string& path);
+  systemstate::RootNode *loadPlugins(const std::string& path);
 
 private:
   std::list<std::shared_ptr<PluginData >> m_plugins;

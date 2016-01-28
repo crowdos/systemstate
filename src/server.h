@@ -7,15 +7,14 @@
 #include "protocol.h"
 
 namespace systemstate {
-  class DirNode;
-  class Node;
+  class RootNode;
 };
 
 class Session;
 
 class Server {
 public:
-  Server(const std::string& path, boost::asio::io_service& service, systemstate::DirNode *root);
+  Server(const std::string& path, boost::asio::io_service& service, systemstate::RootNode *root);
   ~Server();
 
   void start();
@@ -38,10 +37,7 @@ private:
   Response subscribe(Session *session, const Request& req);
   Response unsubscribe(Session *session, const Request& req);
 
-  const systemstate::Node *findNode(const std::string& path);
-  const systemstate::Node *findNode(const systemstate::Node *node, const std::string& name);
-
-  systemstate::DirNode *m_root;
+  systemstate::RootNode *m_root;
   boost::asio::io_service& m_service;
   boost::asio::local::stream_protocol::endpoint m_ep;
   boost::asio::local::stream_protocol::acceptor m_acceptor;

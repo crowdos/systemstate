@@ -1,6 +1,7 @@
 #include "stateplugin.h"
 #include <algorithm>
-#include <assert.h>
+#include <boost/tokenizer.hpp>
+#include <cassert>
 
 using namespace systemstate;
 
@@ -121,6 +122,61 @@ bool DirNode::removeFile(FileNode *child) {
   // TODO:
 }
 #endif
+
+RootNode::RootNode() :
+  DirNode(std::string(), nullptr) {
+
+}
+
+const FileNode *RootNode::findNode(const std::string& path) {
+  boost::char_separator<char> sep(".");
+  boost::tokenizer<boost::char_separator<char> > tok(path, sep);
+
+  std::list<std::string> tokens;
+
+  for (auto iter = tok.begin(); iter != tok.end(); iter++) {
+    tokens.push_back(*iter);
+  }
+
+  const Node *node = this;
+  while (!tokens.empty()) {
+    std::string token = tokens.front();
+    tokens.pop_front();
+    node = findNode(node, token);
+    if (!node) {
+      return nullptr;
+    }
+  }
+
+  assert(node != this);
+
+  if (node == this) {
+    return nullptr;
+  }
+
+  return node->type() == File ? dynamic_cast<const FileNode *>(node) : nullptr;
+}
+
+const Node *RootNode::findNode(const Node *node, const std::string& name) {
+  if (node->type() != Node::Dir) {
+    if (node->name() == name) {
+      return node;
+    }
+
+    return nullptr;
+  }
+
+  const DirNode *d = dynamic_cast<const DirNode *>(node);
+
+  for (int x = 0; x < d->numberOfChildren(); x++) {
+    const Node *n = d->childAt(x);
+    if (n->name() == name) {
+      return n;
+    }
+  }
+
+  return nullptr;
+}
 
 Plugin::Plugin() {
 
