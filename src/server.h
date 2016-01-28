@@ -29,8 +29,9 @@ public:
 
   void removeSession(Session *session);
 
-private:
   void shutdown();
+
+private:
   const systemstate::Node *findNode(const std::string& path);
 
   Response read(const Request& req);

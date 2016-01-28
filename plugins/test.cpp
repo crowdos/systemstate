@@ -25,9 +25,11 @@ public:
   }
 
   void stop() {
-    m_running = false;
-    m_thread.join();
-    m_value = -1;
+    if (m_running) {
+      m_running = false;
+      m_thread.join();
+      m_value = -1;
+    }
   }
 
   std::string value() {
