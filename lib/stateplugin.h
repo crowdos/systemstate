@@ -30,12 +30,12 @@ public:
 
   virtual NodeType type() const = 0;
 
-  const DirNode *parent() const { return m_parent; }
+  DirNode *parent() const { return m_parent; }
   const std::string& name() const { return m_name; }
 
 private:
   const std::string m_name;
-  const DirNode *m_parent;
+  DirNode *m_parent;
 };
 
 class FileNode : public Node {
@@ -72,9 +72,7 @@ public:
   FileNode *appendFile(FileNode *child);
   FileNode *appendFile(const std::string& name, Plugin *plugin);
 
-#if 0
-  bool removeFile(FileNode *child);
-#endif
+  void removeNode(Node *node);
 
   ssize_t numberOfChildren() const { return m_children.size(); }
   const Node *childAt(int x) const { return m_children.at(x); }
@@ -107,15 +105,29 @@ public:
   virtual bool read(const FileNode *node, std::string& data) = 0;
   virtual bool write(FileNode *node, const std::string& data) = 0;
 
+  void setNotifier(const std::function<void(systemstate::Plugin *)>& notify) { m_notify = notify; }
+
 protected:
   Plugin();
+
+private:
+  friend class FileNode;
+  void ref() { ++m_ref; }
+  void unref() { --m_ref; }
+  int refCount() { return m_ref; }
+  void notify() { m_notify(this); }
+  int m_ref;
+  std::function<void(systemstate::Plugin *)> m_notify;
 };
 
 };
 
-#define REGISTER_STATE_PLUGIN(x)		\
-  extern "C" systemstate::Plugin *__init() {	\
-    return new x;                               \
+#define REGISTER_STATE_PLUGIN(x)					\
+  extern "C" systemstate::Plugin *					\
+  __init(const std::function<void(systemstate::Plugin *)>& f) {		\
+    x *p = new x();							\
+    p->setNotifier(f);							\
+    return p;								\
   }
 
 #endif /* STATE_PLUGIN_H */

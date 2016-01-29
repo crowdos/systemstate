@@ -6,6 +6,8 @@
 
 namespace systemstate {
   class RootNode;
+  class DirNode;
+  class Plugin;
 };
 
 class PluginData;
@@ -20,6 +22,9 @@ public:
   bool load(const std::string& path);
 
 private:
+  void unload(systemstate::Plugin *plugin);
+  void clean(systemstate::DirNode *node, systemstate::Plugin *plugin);
+
   systemstate::RootNode *m_root;
   PluginDb& m_db;
   std::string m_path;

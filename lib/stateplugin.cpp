@@ -43,11 +43,13 @@ void FileNode::removeListener(Listener *listener) {
 bool FileNode::open() {
   if (m_open > 0) {
     ++m_open;
+    plugin()->ref();
     return true;
   }
 
   if (plugin()->start(this)) {
     ++m_open;
+    plugin()->ref();
     return true;
   }
 
@@ -56,9 +58,14 @@ bool FileNode::open() {
 
 void FileNode::close() {
   --m_open;
+  plugin()->unref();
 
   if (m_open == 0) {
     plugin()->stop(this);
+  }
+
+  if (plugin()->refCount() == 0) {
+    plugin()->notify();
   }
 }
 
@@ -117,11 +124,16 @@ FileNode *DirNode::appendFile(const std::string& name, Plugin *plugin) {
   return node;
 }
 
-#if 0
-bool DirNode::removeFile(FileNode *child) {
-  // TODO:
+void DirNode::removeNode(Node *node) {
+  auto iter = std::find(m_children.begin(), m_children.end(), node);
+  if (iter != m_children.end()) {
+    m_children.erase(iter);
+    delete node;
+    node = nullptr;
+  }
+
+  assert(node == nullptr);
 }
-#endif
 
 RootNode::RootNode() :
   DirNode(std::string(), nullptr) {
@@ -178,7 +190,8 @@ const Node *RootNode::findNode(const Node *node, const std::string& name) {
   return nullptr;
 }
 
-Plugin::Plugin() {
+Plugin::Plugin() :
+  m_ref(0) {
 
 }
 
