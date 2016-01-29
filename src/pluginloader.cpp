@@ -9,11 +9,19 @@ typedef systemstate::Plugin *(*__init)();
 
 class PluginData {
 public:
-  PluginData() : m_handle(nullptr) { }
+  PluginData() :
+    m_handle(nullptr),
+    m_plugin(nullptr)
+  { }
 
   ~PluginData() { unload(); }
 
   void unload() {
+    if (m_plugin) {
+      delete m_plugin;
+      m_plugin = nullptr;
+    }
+
     if (m_handle) {
       dlclose(m_handle);
       m_handle = nullptr;
