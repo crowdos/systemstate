@@ -6,8 +6,6 @@
 #include "plugindb.h"
 #include <sys/signalfd.h>
 
-#define PLUGINS_DIR "plugins"
-
 class SignalHandler {
 public:
   SignalHandler(Server& server) :
