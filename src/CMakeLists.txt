@@ -9,5 +9,5 @@ add_executable(systemstated
   plugindb.cpp
   server.cpp
   )
-target_link_libraries(systemstated systemstate dl ${Boost_LIBRARIES})
+target_link_libraries(systemstated systemstate dl ${Boost_LIBRARIES} pthread)
 install(TARGETS systemstated DESTINATION /usr/bin)
