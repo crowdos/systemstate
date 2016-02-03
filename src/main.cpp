@@ -20,7 +20,6 @@ main(int argc, char *argv[]) {
 
   try {
     std::string path(Utils::getAddress());
-    ::unlink(path.c_str());
     Server server(path, loader);
 
     boost::asio::signal_set signals(server.service(), SIGQUIT, SIGINT, SIGTERM);
