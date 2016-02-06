@@ -1,0 +1,11 @@
+function(plugin_loader ...)
+  include_directories(../lib)
+  add_executable(${ARGV0} loader.cpp ${ARGN})
+  target_link_libraries(${ARGV0} systemstate)
+endfunction(plugin_loader)
+
+find_package(PkgConfig)
+pkg_check_modules(GLIB REQUIRED glib-2.0)
+include_directories(${GLIB_INCLUDE_DIRS})
+plugin_loader(default default.cpp)
+target_link_libraries(default ${GLIB_LIBRARIES})

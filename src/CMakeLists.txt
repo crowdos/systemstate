@@ -1,4 +1,4 @@
-find_package(Boost REQUIRED system)
+find_package(Boost REQUIRED system program_options)
 
 include_directories(${Boost_INCLUDE_DIRS})
 include_directories(../lib)
@@ -8,6 +8,7 @@ add_executable(systemstated
   pluginloader.cpp
   plugindb.cpp
   server.cpp
+  process.cpp
   )
 target_link_libraries(systemstated systemstate dl ${Boost_LIBRARIES} pthread)
 install(TARGETS systemstated DESTINATION /usr/bin)

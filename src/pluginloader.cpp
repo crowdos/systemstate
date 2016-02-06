@@ -58,10 +58,11 @@ private:
   void *m_handle;
 };
 
-PluginLoader::PluginLoader(PluginDb& db, const std::string& path) :
+PluginLoader::PluginLoader(PluginDb& db,
+			   const std::string& pluginsPath, const std::string& loadersPath) :
   m_root(new systemstate::RootNode),
   m_db(db),
-  m_path(path) {
+  m_pluginsPath(pluginsPath) {
 
 }
 
@@ -81,7 +82,7 @@ bool PluginLoader::load(const std::string& path) {
   }
 
   std::stringstream s;
-  s << m_path << "/lib" << id << ".so";
+  s << m_pluginsPath << "/lib" << id << ".so";
   std::shared_ptr<PluginData> data = std::make_shared<PluginData>();
   if (!data->load(s.str(), m_root, [this](systemstate::Plugin *plugin) {unload(plugin);})) {
     return false;

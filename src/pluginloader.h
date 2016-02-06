@@ -15,7 +15,7 @@ class PluginDb;
 
 class PluginLoader {
 public:
-  PluginLoader(PluginDb& db, const std::string& path);
+  PluginLoader(PluginDb& db, const std::string& pluginsPath, const std::string& loadersPath);
   ~PluginLoader();
 
   systemstate::RootNode *rootNode();
@@ -27,7 +27,8 @@ private:
 
   systemstate::RootNode *m_root;
   PluginDb& m_db;
-  std::string m_path;
+  std::string m_pluginsPath;
+  std::string m_loadersPath;
   std::list<std::shared_ptr<PluginData >> m_plugins;
 };
 
