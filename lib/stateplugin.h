@@ -50,8 +50,6 @@ public:
   void removeListener(Listener *listener);
   bool open();
   void close();
-
-protected:
   void dataChanged(const std::string& data);
 
 private:
