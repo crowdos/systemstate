@@ -3,37 +3,14 @@ find_package(Boost REQUIRED system)
 include_directories(${Boost_INCLUDE_DIRS})
 include_directories(../lib)
 
-add_executable(systemstate-read
-  common.cpp
-  read.cpp
-  )
-target_link_libraries(systemstate-read systemstate ${Boost_LIBRARIES})
-install(TARGETS systemstate-read DESTINATION /usr/bin)
+function(state_executable ...)
+  add_executable(${ARGV0} common.cpp ${ARGN})
+  target_link_libraries(${ARGV0} systemstate ${Boost_LIBRARIES} pthread)
+install(TARGETS ${ARGV0} DESTINATION /usr/bin)
+endfunction(state_executable)
 
-add_executable(systemstate-write
-  common.cpp
-  write.cpp
-  )
-target_link_libraries(systemstate-write systemstate ${Boost_LIBRARIES})
-install(TARGETS systemstate-write DESTINATION /usr/bin)
-
-add_executable(systemstate-ls
-  common.cpp
-  ls.cpp
-  )
-target_link_libraries(systemstate-ls systemstate ${Boost_LIBRARIES})
-install(TARGETS systemstate-ls DESTINATION /usr/bin)
-
-add_executable(systemstate-watch
-  common.cpp
-  watch.cpp
-  )
-target_link_libraries(systemstate-watch systemstate ${Boost_LIBRARIES})
-install(TARGETS systemstate-watch DESTINATION /usr/bin)
-
-add_executable(systemstate-ping
-  common.cpp
-  ping.cpp
-  )
-target_link_libraries(systemstate-ping systemstate ${Boost_LIBRARIES})
-install(TARGETS systemstate-ping DESTINATION /usr/bin)
+state_executable(systemstate-read read.cpp)
+state_executable(systemstate-write write.cpp)
+state_executable(systemstate-ls ls.cpp)
+state_executable(systemstate-watch watch.cpp)
+state_executable(systemstate-ping ping.cpp)
