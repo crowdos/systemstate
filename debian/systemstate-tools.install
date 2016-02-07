@@ -1,0 +1,5 @@
+usr/bin/systemstate-ls
+usr/bin/systemstate-write
+usr/bin/systemstate-read
+usr/bin/systemstate-ping
+usr/bin/systemstate-watch

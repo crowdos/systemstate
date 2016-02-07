@@ -1,0 +1,14 @@
+#!/usr/bin/make -f
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+%:
+	dh $@
+
+override_dh_install:
+	rm debian/tmp/usr/lib/libsystemstate.so
+	dh_install --fail-missing
+
+override_dh_strip:
+	dh_strip -psystemstate -psystemstate-tools --dbg-package=systemstate-dbg

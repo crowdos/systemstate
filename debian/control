@@ -1,0 +1,33 @@
+Source: systemstate
+Section: misc
+Priority: optional
+Maintainer: Mohammed Sameer <msameer@foolab.org>
+Build-Depends: debhelper (>= 9),
+               cmake,
+               libboost-system-dev
+Standards-Version: 3.9.6
+
+Package: systemstate
+Architecture: any
+Depends: ${misc:Depends},
+         ${shlibs:Depends}
+Description: systemstate daemon
+ systemstate daemon
+
+Package: systemstate-tools
+Architecture: any
+Depends: ${misc:Depends},
+         ${shlibs:Depends},
+         systemstate (= ${binary:Version})
+Description: systemstate daemon tools
+ systemstate daemon tools
+
+Package: systemstate-dbg
+Priority: extra
+Architecture: any
+Section: debug
+Depends: systemstate (= ${binary:Version}),
+         systemstate-tools (= ${binary:Version}),
+         ${misc:Depends}
+Description: systemstate daemon debugging symbols
+ This package contains the debugging symbols for systemstate
