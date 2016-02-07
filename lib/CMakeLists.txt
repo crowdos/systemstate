@@ -8,4 +8,6 @@ add_library(systemstate SHARED
   ${PROTO_HDRS}
   )
 
-install(TARGETS systemstate DESTINATION /usr/lib)
+set_target_properties(systemstate PROPERTIES SOVERSION 0.0.1 VERSION 0.0.1)
+
+install(TARGETS systemstate LIBRARY DESTINATION /usr/lib)
