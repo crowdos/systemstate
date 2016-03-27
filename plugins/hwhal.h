@@ -2,6 +2,7 @@
 #define __HW_HAL_H__
 
 #include <string>
+#include <sstream>
 #include "stateplugin.h"
 
 class Context;
@@ -13,8 +14,11 @@ public:
   virtual ~ControlContainer() {}
   virtual bool start() = 0;
   virtual void stop() = 0;
-  virtual bool read(std::string& data) = 0;
+  bool read(std::string& data);
   virtual bool write(const std::string& data) = 0;
+
+protected:
+  virtual bool read(std::stringstream& data) = 0;
 };
 
 template <class T> class ControlNode : public systemstate::FileNode, public ControlContainer {
@@ -41,7 +45,7 @@ public:
 
   }
 
-  bool read(std::string& data);
+  bool read(std::stringstream& data);
   bool write(const std::string& data);
 };
 
@@ -52,7 +56,7 @@ public:
 
   }
 
-  bool read(std::string& data);
+  bool read(std::stringstream& data);
   bool write(const std::string& data);
 };
 

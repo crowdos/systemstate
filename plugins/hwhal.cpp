@@ -7,6 +7,12 @@
 #include <hwhal/display.h>
 #include <hwhal/lights.h>
 
+bool ControlContainer::read(std::string& data) {
+  std::stringstream s(data);
+
+  return read(s);
+}
+
 template <class T> ControlNode<T>::ControlNode(const std::string& name, systemstate::DirNode *dir,
 					       systemstate::Plugin *plugin,
 					       Context *ctx, const std::string& id) :
@@ -37,9 +43,8 @@ template <class T> void ControlNode<T>::stop() {
   }
 }
 
-bool ScreenBlanked::read(std::string& data) {
-  std::stringstream s(data);
-  s << control()->isBlank() ? "1" : "0";
+bool ScreenBlanked::read(std::stringstream& data) {
+  data << control()->isBlank() ? "1" : "0";
   return true;
 }
 
@@ -54,9 +59,8 @@ bool ScreenBlanked::write(const std::string& data) {
   return true;
 }
 
-bool ScreenBrightness::read(std::string& data) {
-  std::stringstream s(data);
-  s << control()->backlightBrightness();
+bool ScreenBrightness::read(std::stringstream& data) {
+  data << control()->backlightBrightness();
   return true;
 }
 
