@@ -31,3 +31,27 @@ Depends: systemstate (= ${binary:Version}),
          ${misc:Depends}
 Description: systemstate daemon debugging symbols
  This package contains the debugging symbols for systemstate
+
+Package: systemstate-plugin-test
+Architecture: any
+Depends: ${misc:Depends},
+         ${shlibs:Depends},
+         systemstate (= ${binary:Version})
+Description: systemstate test plugin
+ systemstate test plugin
+
+Package: systemstate-plugin-test2
+Architecture: any
+Depends: ${misc:Depends},
+         ${shlibs:Depends},
+         systemstate (= ${binary:Version})
+Description: systemstate test2 plugin
+ systemstate test2 plugin
+
+Package: systemstate-plugin-hwhal
+Architecture: any
+Depends: ${misc:Depends},
+         ${shlibs:Depends},
+         systemstate (= ${binary:Version})
+Description: systemstate hwhal plugin
+ systemstate hwhal plugin
