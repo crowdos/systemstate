@@ -5,6 +5,7 @@
 #include <hwhal/context.h>
 #include <hwhal/control.h>
 #include <hwhal/display.h>
+#include <hwhal/lights.h>
 
 template <class T> ControlNode<T>::ControlNode(const std::string& name, systemstate::DirNode *dir,
 					       systemstate::Plugin *plugin,
@@ -53,6 +54,28 @@ bool ScreenBlanked::write(const std::string& data) {
   return true;
 }
 
+bool ScreenBrightness::read(std::string& data) {
+  std::stringstream s(data);
+  s << control()->backlightBrightness();
+  return true;
+}
+
+bool ScreenBrightness::write(const std::string& data) {
+  if (data.empty()) {
+    return false;
+  }
+
+  int level = std::stoi(data);
+
+  if (level < control()->minBacklightBrightness() || level > control()->maxBacklightBrightness()) {
+    return false;
+  }
+
+  control()->setBacklightBrightness(level);
+
+  return true;
+}
+
 // Now the plugin
 
 class HwHalPlugin : public systemstate::Plugin {
@@ -92,6 +115,7 @@ void HwHalPlugin::init(systemstate::DirNode *root) {
 
   systemstate::DirNode *screen = root->appendDir("Screen");
   screen->appendFile(new ScreenBlanked(screen, this, m_ctx));
+  screen->appendFile(new ScreenBrightness(screen, this, m_ctx));
 
 }
 
