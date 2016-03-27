@@ -97,10 +97,10 @@ public:
 
   virtual void init(DirNode *root) = 0;
 
-  virtual bool start(const FileNode *node) = 0;
-  virtual void stop(const FileNode *node) = 0;
+  virtual bool start(FileNode *node) = 0;
+  virtual void stop(FileNode *node) = 0;
 
-  virtual bool read(const FileNode *node, std::string& data) = 0;
+  virtual bool read(FileNode *node, std::string& data) = 0;
   virtual bool write(FileNode *node, const std::string& data) = 0;
 
   void setNotifier(const std::function<void(systemstate::Plugin *)>& notify) { m_notify = notify; }

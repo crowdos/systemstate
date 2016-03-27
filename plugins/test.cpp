@@ -54,9 +54,9 @@ private:
 
 class TestPlugin : public Plugin {
   void init(DirNode *root);
-  bool start(const FileNode *node);
-  void stop(const FileNode *node);
-  bool read(const FileNode *node, std::string& data);
+  bool start(FileNode *node);
+  void stop(FileNode *node);
+  bool read(FileNode *node, std::string& data);
   bool write(FileNode *node, const std::string& data);
 
   Counter m_counter;
@@ -71,7 +71,7 @@ void TestPlugin::init(DirNode *root) {
   m_data = "test_data";
 }
 
-bool TestPlugin::start(const FileNode *node) {
+bool TestPlugin::start(FileNode *node) {
   if (node->name() == "counter") {
     return m_counter.start(node);
   }
@@ -79,13 +79,13 @@ bool TestPlugin::start(const FileNode *node) {
   return true;
 }
 
-void TestPlugin::stop(const FileNode *node) {
+void TestPlugin::stop(FileNode *node) {
   if (node->name() == "counter") {
     m_counter.stop();
   }
 }
 
-bool TestPlugin::read(const FileNode *node, std::string& data) {
+bool TestPlugin::read(FileNode *node, std::string& data) {
   if (node->name() == "counter") {
     data = m_counter.value();
   } else {

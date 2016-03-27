@@ -8,9 +8,9 @@ using namespace systemstate;
 
 class Test2Plugin : public Plugin {
   void init(DirNode *root);
-  bool start(const FileNode *node);
-  void stop(const FileNode *node);
-  bool read(const FileNode *node, std::string& data);
+  bool start(FileNode *node);
+  void stop(FileNode *node);
+  bool read(FileNode *node, std::string& data);
   bool write(FileNode *node, const std::string& data);
 };
 
@@ -21,15 +21,15 @@ void Test2Plugin::init(DirNode *root) {
   d->appendFile("test2", this);
 }
 
-bool Test2Plugin::start(const FileNode *node) {
+bool Test2Plugin::start(FileNode *node) {
   return true;
 }
 
-void Test2Plugin::stop(const FileNode *node) {
+void Test2Plugin::stop(FileNode *node) {
 
 }
 
-bool Test2Plugin::read(const FileNode *node, std::string& data) {
+bool Test2Plugin::read(FileNode *node, std::string& data) {
   data = node->name();
   return true;
 }
