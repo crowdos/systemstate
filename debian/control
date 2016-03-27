@@ -4,7 +4,8 @@ Priority: optional
 Maintainer: Mohammed Sameer <msameer@foolab.org>
 Build-Depends: debhelper (>= 9),
                cmake,
-               libboost-system-dev
+               libboost-system-dev,
+               libhwhal-dev
 Standards-Version: 3.9.6
 
 Package: systemstate
