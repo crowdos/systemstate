@@ -140,7 +140,7 @@ RootNode::RootNode() :
 
 }
 
-const FileNode *RootNode::findNode(const std::string& path) {
+const Node *RootNode::findNode(const std::string& path) {
   boost::char_separator<char> sep(".");
   boost::tokenizer<boost::char_separator<char> > tok(path, sep);
 
@@ -160,13 +160,7 @@ const FileNode *RootNode::findNode(const std::string& path) {
     }
   }
 
-  assert(node != this);
-
-  if (node == this) {
-    return nullptr;
-  }
-
-  return node->type() == File ? dynamic_cast<const FileNode *>(node) : nullptr;
+  return node;
 }
 
 const Node *RootNode::findNode(const Node *node, const std::string& name) {

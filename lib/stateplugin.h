@@ -85,7 +85,7 @@ private:
 class RootNode : public DirNode {
 public:
   RootNode();
-  const FileNode *findNode(const std::string& path);
+  const Node *findNode(const std::string& path);
 
 private:
   const Node *findNode(const Node *node, const std::string& name);
