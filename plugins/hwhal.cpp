@@ -80,6 +80,16 @@ bool ScreenBrightness::write(const std::string& data) {
   return true;
 }
 
+bool ScreenBrightnessMin::read(std::stringstream& data) {
+  data << control()->minBacklightBrightness();
+  return true;
+}
+
+bool ScreenBrightnessMax::read(std::stringstream& data) {
+  data << control()->maxBacklightBrightness();
+  return true;
+}
+
 // Now the plugin
 
 class HwHalPlugin : public systemstate::Plugin {
@@ -119,8 +129,11 @@ void HwHalPlugin::init(systemstate::DirNode *root) {
 
   systemstate::DirNode *screen = root->appendDir("Screen");
   screen->appendFile(new ScreenBlanked(screen, this, m_ctx));
-  screen->appendFile(new ScreenBrightness(screen, this, m_ctx));
 
+  systemstate::DirNode *brightness = screen->appendDir("Brightness");
+  brightness->appendFile(new ScreenBrightness(brightness, this, m_ctx));
+  brightness->appendFile(new ScreenBrightnessMin(brightness, this, m_ctx));
+  brightness->appendFile(new ScreenBrightnessMax(brightness, this, m_ctx));
 }
 
 bool HwHalPlugin::start(systemstate::FileNode *node) {

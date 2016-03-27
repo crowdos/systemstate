@@ -15,7 +15,7 @@ public:
   virtual bool start() = 0;
   virtual void stop() = 0;
   bool read(std::string& data);
-  virtual bool write(const std::string& data) = 0;
+  virtual bool write(const std::string& data) { return false; }
 
 protected:
   virtual bool read(std::stringstream& data) = 0;
@@ -52,12 +52,32 @@ public:
 class ScreenBrightness : public ControlNode<Lights> {
 public:
   ScreenBrightness(systemstate::DirNode *dir, systemstate::Plugin *plugin, Context *ctx) :
-    ControlNode<Lights>("Brightness", dir, plugin, ctx, "light") {
+    ControlNode<Lights>("Current", dir, plugin, ctx, "light") {
 
   }
 
   bool read(std::stringstream& data);
   bool write(const std::string& data);
+};
+
+class ScreenBrightnessMin : public ControlNode<Lights> {
+public:
+  ScreenBrightnessMin(systemstate::DirNode *dir, systemstate::Plugin *plugin, Context *ctx) :
+    ControlNode<Lights>("Minimum", dir, plugin, ctx, "light") {
+
+  }
+
+  bool read(std::stringstream& data);
+};
+
+class ScreenBrightnessMax : public ControlNode<Lights> {
+public:
+  ScreenBrightnessMax(systemstate::DirNode *dir, systemstate::Plugin *plugin, Context *ctx) :
+    ControlNode<Lights>("Maximum", dir, plugin, ctx, "light") {
+
+  }
+
+  bool read(std::stringstream& data);
 };
 
 #endif /* __HW_HAL_H__ */
