@@ -8,6 +8,7 @@
 class Context;
 class Display;
 class Lights;
+class Info;
 
 class ControlContainer {
 public:
@@ -74,6 +75,36 @@ class ScreenBrightnessMax : public ControlNode<Lights> {
 public:
   ScreenBrightnessMax(systemstate::DirNode *dir, systemstate::Plugin *plugin, Context *ctx) :
     ControlNode<Lights>("Maximum", dir, plugin, ctx, "light") {
+
+  }
+
+  bool read(std::stringstream& data);
+};
+
+class DeviceMaker : public ControlNode<Info> {
+public:
+  DeviceMaker(systemstate::DirNode *dir, systemstate::Plugin *plugin, Context *ctx) :
+    ControlNode<Info>("Maker", dir, plugin, ctx, "info") {
+
+  }
+
+  bool read(std::stringstream& data);
+};
+
+class DeviceModel : public ControlNode<Info> {
+public:
+  DeviceModel(systemstate::DirNode *dir, systemstate::Plugin *plugin, Context *ctx) :
+    ControlNode<Info>("Model", dir, plugin, ctx, "info") {
+
+  }
+
+  bool read(std::stringstream& data);
+};
+
+class DeviceCodeName : public ControlNode<Info> {
+public:
+  DeviceCodeName(systemstate::DirNode *dir, systemstate::Plugin *plugin, Context *ctx) :
+    ControlNode<Info>("CodeName", dir, plugin, ctx, "info") {
 
   }
 

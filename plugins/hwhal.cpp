@@ -6,6 +6,7 @@
 #include <hwhal/control.h>
 #include <hwhal/display.h>
 #include <hwhal/lights.h>
+#include <hwhal/info.h>
 
 bool ControlContainer::read(std::string& data) {
   std::stringstream s(data);
@@ -90,6 +91,21 @@ bool ScreenBrightnessMax::read(std::stringstream& data) {
   return true;
 }
 
+bool DeviceMaker::read(std::stringstream& data) {
+  data << control()->maker();
+  return true;
+}
+
+bool DeviceModel::read(std::stringstream& data) {
+  data << control()->model();
+  return true;
+}
+
+bool DeviceCodeName::read(std::stringstream& data) {
+  data << control()->codeName();
+  return true;
+}
+
 // Now the plugin
 
 class HwHalPlugin : public systemstate::Plugin {
@@ -134,6 +150,11 @@ void HwHalPlugin::init(systemstate::DirNode *root) {
   brightness->appendFile(new ScreenBrightness(brightness, this, m_ctx));
   brightness->appendFile(new ScreenBrightnessMin(brightness, this, m_ctx));
   brightness->appendFile(new ScreenBrightnessMax(brightness, this, m_ctx));
+
+  systemstate::DirNode *device = root->appendDir("Device");
+  device->appendFile(new DeviceMaker(device, this, m_ctx));
+  device->appendFile(new DeviceModel(device, this, m_ctx));
+  device->appendFile(new DeviceCodeName(device, this, m_ctx));
 }
 
 bool HwHalPlugin::start(systemstate::FileNode *node) {
