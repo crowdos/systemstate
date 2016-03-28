@@ -19,6 +19,9 @@ void Test2Plugin::init(DirNode *root) {
   d = d->appendDir("Test2");
   d->appendFile("test1", this);
   d->appendFile("test2", this);
+  d = root->appendDir("Test3");
+  d->appendFile("test33", this);
+  d->appendFile("test333", this);
 }
 
 bool Test2Plugin::start(FileNode *node) {
