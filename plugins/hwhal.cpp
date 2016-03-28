@@ -70,7 +70,14 @@ bool ScreenBrightness::write(const std::string& data) {
     return false;
   }
 
-  int level = std::stoi(data);
+  int level;
+
+  try {
+    level = std::stoi(data);
+  } catch (...) {
+    // Oops!
+    return false;
+  }
 
   if (level < control()->minBacklightBrightness() || level > control()->maxBacklightBrightness()) {
     return false;
