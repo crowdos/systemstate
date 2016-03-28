@@ -4,6 +4,7 @@
 #include <string>
 #include <sstream>
 #include "stateplugin.h"
+#include <hwhal/control.h>
 
 class Context;
 class Display;
@@ -25,7 +26,7 @@ protected:
 template <class T> class ControlNode : public systemstate::FileNode, public ControlContainer {
 public:
   ControlNode(const std::string& name, systemstate::DirNode *dir, systemstate::Plugin *plugin,
-	      Context *ctx, const std::string& id);
+	      Context *ctx, const ControlId& id);
 
   virtual ~ControlNode() {}
   bool start();
@@ -34,7 +35,7 @@ public:
   T *control() { return m_ctl; }
 
 private:
-  std::string m_id;
+  ControlId m_id;
   Context *m_ctx;
   T *m_ctl;
 };
@@ -42,7 +43,7 @@ private:
 class ScreenBlanked : public ControlNode<Display> {
 public:
   ScreenBlanked(systemstate::DirNode *dir, systemstate::Plugin *plugin, Context *ctx) :
-    ControlNode<Display>("Blanked", dir, plugin, ctx, "display") {
+    ControlNode<Display>("Blanked", dir, plugin, ctx, ControlId::Display) {
 
   }
 
@@ -53,7 +54,7 @@ public:
 class ScreenBrightness : public ControlNode<Lights> {
 public:
   ScreenBrightness(systemstate::DirNode *dir, systemstate::Plugin *plugin, Context *ctx) :
-    ControlNode<Lights>("Current", dir, plugin, ctx, "light") {
+    ControlNode<Lights>("Current", dir, plugin, ctx, ControlId::Lights) {
 
   }
 
@@ -64,7 +65,7 @@ public:
 class ScreenBrightnessMin : public ControlNode<Lights> {
 public:
   ScreenBrightnessMin(systemstate::DirNode *dir, systemstate::Plugin *plugin, Context *ctx) :
-    ControlNode<Lights>("Minimum", dir, plugin, ctx, "light") {
+    ControlNode<Lights>("Minimum", dir, plugin, ctx, ControlId::Lights) {
 
   }
 
@@ -74,7 +75,7 @@ public:
 class ScreenBrightnessMax : public ControlNode<Lights> {
 public:
   ScreenBrightnessMax(systemstate::DirNode *dir, systemstate::Plugin *plugin, Context *ctx) :
-    ControlNode<Lights>("Maximum", dir, plugin, ctx, "light") {
+    ControlNode<Lights>("Maximum", dir, plugin, ctx, ControlId::Lights) {
 
   }
 
@@ -84,7 +85,7 @@ public:
 class DeviceMaker : public ControlNode<Info> {
 public:
   DeviceMaker(systemstate::DirNode *dir, systemstate::Plugin *plugin, Context *ctx) :
-    ControlNode<Info>("Maker", dir, plugin, ctx, "info") {
+    ControlNode<Info>("Maker", dir, plugin, ctx, ControlId::Info) {
 
   }
 
@@ -94,7 +95,7 @@ public:
 class DeviceModel : public ControlNode<Info> {
 public:
   DeviceModel(systemstate::DirNode *dir, systemstate::Plugin *plugin, Context *ctx) :
-    ControlNode<Info>("Model", dir, plugin, ctx, "info") {
+    ControlNode<Info>("Model", dir, plugin, ctx, ControlId::Info) {
 
   }
 
@@ -104,7 +105,7 @@ public:
 class DeviceCodeName : public ControlNode<Info> {
 public:
   DeviceCodeName(systemstate::DirNode *dir, systemstate::Plugin *plugin, Context *ctx) :
-    ControlNode<Info>("CodeName", dir, plugin, ctx, "info") {
+    ControlNode<Info>("CodeName", dir, plugin, ctx, ControlId::Info) {
 
   }
 

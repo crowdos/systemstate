@@ -16,7 +16,7 @@ bool ControlContainer::read(std::string& data) {
 
 template <class T> ControlNode<T>::ControlNode(const std::string& name, systemstate::DirNode *dir,
 					       systemstate::Plugin *plugin,
-					       Context *ctx, const std::string& id) :
+					       Context *ctx, const ControlId& id) :
   FileNode(name, dir, plugin),
   m_id(id),
   m_ctx(ctx),
