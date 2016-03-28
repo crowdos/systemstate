@@ -109,8 +109,9 @@ void PluginLoader::unload(systemstate::Plugin *plugin) {
 void PluginLoader::clean(systemstate::DirNode *node, systemstate::Plugin *plugin) {
   std::list<systemstate::FileNode *> nodes;
 
-  for (int x = 0; x < node->numberOfChildren(); x++) {
-    const systemstate::Node *child = node->childAt(x);
+  int len = node->numberOfChildren();
+  while (--len >= 0) {
+    const systemstate::Node *child = node->childAt(len);
 
     if (child->type() == systemstate::Node::File) {
       systemstate::FileNode *f
