@@ -133,18 +133,14 @@ public:
 
 private:
   Context *m_ctx;
-  Display *m_dpy;
 };
 
 HwHalPlugin::HwHalPlugin() :
-  m_ctx(nullptr),
-  m_dpy(nullptr) {
+  m_ctx(nullptr) {
 
 }
 
 HwHalPlugin::~HwHalPlugin() {
-  m_dpy = nullptr;
-
   delete m_ctx;
   m_ctx = nullptr;
 }
