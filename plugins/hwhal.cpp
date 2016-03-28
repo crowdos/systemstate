@@ -9,9 +9,14 @@
 #include <hwhal/info.h>
 
 bool ControlContainer::read(std::string& data) {
-  std::stringstream s(data);
+  std::stringstream s;
 
-  return read(s);
+  if (read(s)) {
+    data = s.str();
+    return true;
+  }
+
+  return false;
 }
 
 template <class T> ControlNode<T>::ControlNode(const std::string& name, systemstate::DirNode *dir,
