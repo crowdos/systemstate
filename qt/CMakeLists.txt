@@ -27,8 +27,8 @@ configure_file(
   )
 
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/contextsubscriber-1.0.pc"
-  DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
+  DESTINATION /usr/lib/pkgconfig
   PERMISSIONS OWNER_READ GROUP_READ WORLD_READ OWNER_WRITE)
 
 install(TARGETS contextsubscriber LIBRARY DESTINATION /usr/lib)
-install(FILES contextsubscriber.h DESTINATION /usr/include)
+install(FILES contextproperty.h DESTINATION /usr/include)
