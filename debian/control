@@ -56,3 +56,19 @@ Depends: ${misc:Depends},
          systemstate (= ${binary:Version})
 Description: systemstate hwhal plugin
  systemstate hwhal plugin
+
+Package: libsystemstate-contextsubscriber1
+Architecture: any
+Depends: ${misc:Depends},
+         ${shlibs:Depends},
+         systemstate (= ${binary:Version})
+Description: systemstate context subscriber library
+ systemstate context subscriber library
+
+Package: libsystemstate-contextsubscriber-dev
+Architecture: any
+Depends: ${misc:Depends},
+         ${shlibs:Depends},
+         libsystemstate-contextsubscriber1 (= ${binary:Version})
+Description: systemstate context subscriber development library and headers
+ systemstate context subscriber development library and headers
