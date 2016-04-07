@@ -49,22 +49,6 @@ template <class T> void ControlNode<T>::stop() {
   }
 }
 
-bool ScreenBlanked::read(std::stringstream& data) {
-  data << control()->isBlank() ? "1" : "0";
-  return true;
-}
-
-bool ScreenBlanked::write(const std::string& data) {
-  if (data.empty()) {
-    return false;
-  }
-
-  bool blank = (data != "0");
-  control()->blank(blank);
-
-  return true;
-}
-
 bool ScreenBrightness::read(std::stringstream& data) {
   data << control()->backlightBrightness();
   return true;
@@ -152,7 +136,6 @@ void HwHalPlugin::init(systemstate::DirNode *root) {
   }
 
   systemstate::DirNode *screen = root->appendDir("Screen");
-  screen->appendFile(new ScreenBlanked(screen, this, m_ctx));
 
   systemstate::DirNode *brightness = screen->appendDir("Brightness");
   brightness->appendFile(new ScreenBrightness(brightness, this, m_ctx));

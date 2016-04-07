@@ -40,17 +40,6 @@ private:
   T *m_ctl;
 };
 
-class ScreenBlanked : public ControlNode<Display> {
-public:
-  ScreenBlanked(systemstate::DirNode *dir, systemstate::Plugin *plugin, Context *ctx) :
-    ControlNode<Display>("Blanked", dir, plugin, ctx, ControlId::Display) {
-
-  }
-
-  bool read(std::stringstream& data);
-  bool write(const std::string& data);
-};
-
 class ScreenBrightness : public ControlNode<Lights> {
 public:
   ScreenBrightness(systemstate::DirNode *dir, systemstate::Plugin *plugin, Context *ctx) :
