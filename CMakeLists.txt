@@ -4,5 +4,6 @@ set(CMAKE_CXX_FLAGS "-std=c++0x")
 
 add_subdirectory(lib)
 add_subdirectory(src)
+add_subdirectory(qt)
 add_subdirectory(tools)
 add_subdirectory(plugins)
