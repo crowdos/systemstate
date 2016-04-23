@@ -33,19 +33,13 @@ void Connection::close() {
 
   try {
     m_socket.cancel();
-    std::cerr << "ll d" << std::endl;
     m_socket.close();
   } catch (...) {}
 
   try {
-    std::cerr << "ll e" << std::endl;
-    //    m_work.reset();
-    std::cerr << "ll g" << std::endl;
     m_service.stop();
-    std::cerr << "ll h" << std::endl;
   } catch (std::exception& e) {
     // We don't care.
-    std::cerr << "SSSSSSSSSSS " << e.what() << std::endl;
   }
 }
 
@@ -74,8 +68,6 @@ void Connection::run() {
       async_send(Read, m_key);
 
       read_packet();
-
-      //      m_work.reset(new boost::asio::io_service::work(m_service));
 
       m_service.reset();
       m_service.run();
