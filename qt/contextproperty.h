@@ -19,8 +19,11 @@ public:
   virtual ~ContextProperty();
 
   QString key() const;
+
   QVariant value(const QVariant& def) const;
   QVariant value() const;
+
+  void setValue(const QVariant& value);
 
   void subscribe() const;
   void unsubscribe() const;

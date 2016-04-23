@@ -23,6 +23,7 @@ public:
   void subscribe();
   void unsubscribe();
   QVariant value(const QVariant& def);
+  void setValue(const QVariant& value);
 
 private:
   QVariant m_value;
@@ -62,6 +63,11 @@ QVariant ContextPropertyPrivate::value(const QVariant& def) {
   return m_value.isValid() ? m_value : def;
 }
 
+void ContextPropertyPrivate::setValue(const QVariant& value) {
+  Q_ASSERT(m_conn);
+  m_conn->setValue(value.toString().toStdString());
+}
+
 ContextProperty::ContextProperty(const QString& key, QObject *parent) :
   QObject(parent),
   d_ptr(new ContextPropertyPrivate(key, this)) {
@@ -83,6 +89,10 @@ QVariant ContextProperty::value(const QVariant& def) const {
 
 QVariant ContextProperty::value() const {
   return value(QVariant());
+}
+
+void ContextProperty::setValue(const QVariant& value) {
+  d_ptr->setValue(value);
 }
 
 void ContextProperty::subscribe() const {

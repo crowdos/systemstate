@@ -41,6 +41,12 @@ QVariant DeclarativeContextProperty::value() const {
   return m_property ? m_property->value() : QVariant();
 }
 
+void DeclarativeContextProperty::setValue(const QVariant& value) {
+  if (m_property) {
+    m_property->setValue(value);
+  }
+}
+
 QString DeclarativeContextProperty::key() const {
   return m_property ? m_property->key() : QString();
 }

@@ -116,9 +116,9 @@ Response Connection::send(const Op& op, const std::string& path) {
   }
 }
 
-void Connection::async_send(const Op& op, const std::string& path) {
+void Connection::async_send(const Op& op, const std::string& path, const std::string& value) {
   try {
-    Request req(op, path);
+    Request req(op, path, value);
     std::string data = req.data();
     uint32_t size = htonl(data.size());
     m_socket.send(boost::asio::buffer(&size, 4));
@@ -154,4 +154,14 @@ void Connection::handle_read_packet(const boost::system::error_code& error) {
   }
 
   read_packet();
+}
+
+void Connection::setValue(const std::string& value) {
+  m_service.post([this, value]() {
+      try {
+	async_send(Write, m_key, value);
+      } catch (std::exception& ex) {
+	std::cerr << "Exception while setting value: " << ex.what() << std::endl;
+      }
+    });
 }

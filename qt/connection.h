@@ -17,11 +17,14 @@ public:
 
   const std::string& key() { return m_key; }
 
+  void setValue(const std::string& value);
+
 private:
   void run();
   void connect();
   Response send(const Op& op, const std::string& path);
-  void async_send(const Op& op, const std::string& path);
+  void async_send(const Op& op, const std::string& path,
+		  const std::string& value = std::string());
   void handle_read_packet(const boost::system::error_code& error);
 
   void read_packet();

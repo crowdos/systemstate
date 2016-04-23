@@ -18,7 +18,7 @@ public:
 
 class DeclarativeContextProperty : public QObject {
   Q_OBJECT
-  Q_PROPERTY(QVariant value READ value NOTIFY valueChanged)
+  Q_PROPERTY(QVariant value READ value WRITE setValue NOTIFY valueChanged)
   Q_PROPERTY(QString key READ key WRITE setKey NOTIFY keyChanged)
 
 public:
@@ -26,6 +26,7 @@ public:
   ~DeclarativeContextProperty();
 
   QVariant value() const;
+  void setValue(const QVariant& value);
 
   QString key() const;
   void setKey(const QString& key);
