@@ -4,6 +4,7 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
 
 find_package(Qt5Core REQUIRED)
+find_package(Qt5Qml REQUIRED)
 
 add_library(contextsubscriber SHARED contextproperty.cpp connection.cpp)
 include_directories(../lib)
@@ -26,9 +27,16 @@ configure_file(
   "${CMAKE_CURRENT_BINARY_DIR}/contextsubscriber-1.0.pc"
   )
 
+add_library(declarativecontextsubscriber MODULE declarativecontextproperty.cpp)
+target_link_libraries(declarativecontextsubscriber Qt5::Qml contextsubscriber)
+
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/contextsubscriber-1.0.pc"
   DESTINATION /usr/lib/pkgconfig
   PERMISSIONS OWNER_READ GROUP_READ WORLD_READ OWNER_WRITE)
 
 install(TARGETS contextsubscriber LIBRARY DESTINATION /usr/lib)
 install(FILES contextproperty.h DESTINATION /usr/include)
+
+exec_program(qmake ARGS "-query QT_INSTALL_QML" OUTPUT_VARIABLE QT_INSTALL_QML)
+install(TARGETS declarativecontextsubscriber LIBRARY DESTINATION "${QT_INSTALL_QML}/Crowd/SystemState/")
+install(FILES qmldir DESTINATION "${QT_INSTALL_QML}/Crowd/SystemState/")

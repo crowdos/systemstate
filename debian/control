@@ -6,7 +6,8 @@ Build-Depends: debhelper (>= 9),
                cmake,
                libboost-system-dev,
                libhwhal-dev,
-	       qtbase5-dev
+	       qtbase5-dev,
+               qtdeclarative5-dev
 Standards-Version: 3.9.6
 
 Package: systemstate
@@ -23,6 +24,14 @@ Depends: ${misc:Depends},
          systemstate (= ${binary:Version})
 Description: systemstate daemon tools
  systemstate daemon tools
+
+Package: qml-module-crowd-systemstate
+Architecture: any
+Depends: ${misc:Depends},
+         ${shlibs:Depends},
+         libsystemstate-contextsubscriber1 (= ${binary:Version})
+Description: QML module for systemstate
+ QML module for systemstate
 
 Package: systemstate-dbg
 Priority: extra
