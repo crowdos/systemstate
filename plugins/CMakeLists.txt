@@ -10,4 +10,4 @@ state_plugin(testplugin test.cpp)
 state_plugin(testplugin2 test2.cpp)
 
 state_plugin(hwhal hwhal.cpp)
-target_link_libraries(hwhal -lhwhal)
+target_link_libraries(hwhal -lhwhal -lhwhal-loopintegration-asio)
