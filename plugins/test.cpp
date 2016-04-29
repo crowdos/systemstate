@@ -1,25 +1,25 @@
 #include "stateplugin.h"
 #include <iostream>
 #include <sstream>
-#include <thread>
-#include <mutex>
+#include <boost/asio.hpp>
 
 using namespace systemstate;
 
 class Counter {
 public:
-  Counter() : m_running(false) {}
+  Counter(boost::asio::io_service& service) :
+    m_timer(service),
+    m_value(0) {
+
+  }
 
   bool start(const FileNode *node) {
     m_value = 0;
-    m_running = true;
-    m_thread = std::thread([this, node]() {
-	while (m_running) {
-	  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-	  m_mutex.lock();
+    m_timer.expires_from_now(boost::posix_time::seconds(1));
+    m_timer.async_wait([this, node](const boost::system::error_code& error) {
+	if (!error) {
 	  ++m_value;
-	  m_mutex.unlock();
-	  const_cast<FileNode *>(node)->dataChanged(value(m_value));
+	  const_cast<FileNode *>(node)->dataChanged(value());
 	}
       });
 
@@ -27,34 +27,27 @@ public:
   }
 
   void stop() {
-    if (m_running) {
-      m_running = false;
-      m_thread.join();
-      m_value = -1;
-    }
+    m_timer.cancel();
+    m_value = 0;
   }
 
   std::string value() {
-    std::unique_lock<std::mutex> lock(m_mutex);
-    return value(m_value);
-  }
-
-  std::string value(int val) {
     std::stringstream s;
-    s << val;
+    s << m_value;
     return s.str();
   }
 
 private:
-  std::mutex m_mutex;
-  std::thread m_thread;
+  boost::asio::deadline_timer m_timer;
   int m_value;
-  bool m_running;
 };
 
 class TestPlugin : public Plugin {
 public:
-  TestPlugin(const boost::asio::io_service& service) : m_service(service) {}
+  TestPlugin(boost::asio::io_service& service) :
+    m_counter(service) {
+  }
+
   void init(DirNode *root);
   bool start(FileNode *node);
   void stop(FileNode *node);
@@ -62,7 +55,6 @@ public:
   bool write(FileNode *node, const std::string& data);
 
 private:
-  const boost::asio::io_service& m_service;
   Counter m_counter;
   std::string m_data;
 };

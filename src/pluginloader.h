@@ -25,7 +25,7 @@ public:
   ~PluginLoader();
 
   systemstate::RootNode *rootNode();
-  bool load(const std::string& path, const boost::asio::io_service& service);
+  bool load(const std::string& path, boost::asio::io_service& service);
 
 private:
   void unload(systemstate::Plugin *plugin);

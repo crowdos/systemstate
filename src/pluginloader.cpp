@@ -8,7 +8,7 @@
 #include <cassert>
 
 typedef systemstate::Plugin *(*__init)(const std::function<void(systemstate::Plugin *)>&,
-				       const boost::asio::io_service&);
+				       boost::asio::io_service&);
 
 class PluginData {
 public:
@@ -33,7 +33,7 @@ public:
 
   bool load(const std::string& name, systemstate::DirNode *node,
 	    const std::function<void(systemstate::Plugin *)>& unload,
-	    const boost::asio::io_service& service) {
+	    boost::asio::io_service& service) {
     m_handle = dlopen(name.c_str(), RTLD_LAZY);
     if (!m_handle) {
       std::cerr << "Failed to load " << name << ": " << dlerror() << std::endl;
@@ -76,7 +76,7 @@ systemstate::RootNode *PluginLoader::rootNode() {
   return m_root;
 }
 
-bool PluginLoader::load(const std::string& path, const boost::asio::io_service& service) {
+bool PluginLoader::load(const std::string& path, boost::asio::io_service& service) {
   std::string id = m_db.lookUp(path);
   if (id.empty()) {
     return false;

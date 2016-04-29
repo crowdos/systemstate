@@ -129,7 +129,7 @@ private:
 #define REGISTER_STATE_PLUGIN(x)					\
   extern "C" systemstate::Plugin *					\
   __init(const std::function<void(systemstate::Plugin *)>& f,		\
-	 const boost::asio::io_service& service) { 			\
+	 boost::asio::io_service& service) {				\
     x *p = new x(service);						\
     p->setNotifier(f);							\
     return p;								\
