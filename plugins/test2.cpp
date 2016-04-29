@@ -7,6 +7,8 @@
 using namespace systemstate;
 
 class Test2Plugin : public Plugin {
+public:
+  Test2Plugin(const boost::asio::io_service&) {}
   void init(DirNode *root);
   bool start(FileNode *node);
   void stop(FileNode *node);

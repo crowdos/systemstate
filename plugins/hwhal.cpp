@@ -106,7 +106,7 @@ bool DeviceCodeName::read(std::stringstream& data) {
 
 class HwHalPlugin : public systemstate::Plugin {
 public:
-  HwHalPlugin();
+  HwHalPlugin(const boost::asio::io_service& service);
   ~HwHalPlugin();
 
   void init(systemstate::DirNode *root);
@@ -116,10 +116,12 @@ public:
   bool write(systemstate::FileNode *node, const std::string& data);
 
 private:
+  const boost::asio::io_service& m_service;
   Context *m_ctx;
 };
 
-HwHalPlugin::HwHalPlugin() :
+HwHalPlugin::HwHalPlugin(const boost::asio::io_service& service) :
+  m_service(service),
   m_ctx(nullptr) {
 
 }

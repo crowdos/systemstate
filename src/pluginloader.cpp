@@ -7,7 +7,8 @@
 #include <dlfcn.h>
 #include <cassert>
 
-typedef systemstate::Plugin *(*__init)(const std::function<void(systemstate::Plugin *)>&);
+typedef systemstate::Plugin *(*__init)(const std::function<void(systemstate::Plugin *)>&,
+				       const boost::asio::io_service&);
 
 class PluginData {
 public:
@@ -31,7 +32,8 @@ public:
   }
 
   bool load(const std::string& name, systemstate::DirNode *node,
-	    const std::function<void(systemstate::Plugin *)>& unload) {
+	    const std::function<void(systemstate::Plugin *)>& unload,
+	    const boost::asio::io_service& service) {
     m_handle = dlopen(name.c_str(), RTLD_LAZY);
     if (!m_handle) {
       std::cerr << "Failed to load " << name << ": " << dlerror() << std::endl;
@@ -44,7 +46,7 @@ public:
       return false;
     }
 
-    m_plugin = init(unload);
+    m_plugin = init(unload, service);
 
     m_plugin->init(node);
 
@@ -74,7 +76,7 @@ systemstate::RootNode *PluginLoader::rootNode() {
   return m_root;
 }
 
-bool PluginLoader::load(const std::string& path) {
+bool PluginLoader::load(const std::string& path, const boost::asio::io_service& service) {
   std::string id = m_db.lookUp(path);
   if (id.empty()) {
     return false;
@@ -83,7 +85,8 @@ bool PluginLoader::load(const std::string& path) {
   std::stringstream s;
   s << m_path << "/lib" << id << ".so";
   std::shared_ptr<PluginData> data = std::make_shared<PluginData>();
-  if (!data->load(s.str(), m_root, [this](systemstate::Plugin *plugin) {unload(plugin);})) {
+  if (!data->load(s.str(), m_root, [this](systemstate::Plugin *plugin) {unload(plugin);},
+		  service)) {
     return false;
   }
 

@@ -53,12 +53,16 @@ private:
 };
 
 class TestPlugin : public Plugin {
+public:
+  TestPlugin(const boost::asio::io_service& service) : m_service(service) {}
   void init(DirNode *root);
   bool start(FileNode *node);
   void stop(FileNode *node);
   bool read(FileNode *node, std::string& data);
   bool write(FileNode *node, const std::string& data);
 
+private:
+  const boost::asio::io_service& m_service;
   Counter m_counter;
   std::string m_data;
 };

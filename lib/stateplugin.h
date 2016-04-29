@@ -6,6 +6,12 @@
 #include <list>
 #include <functional>
 
+namespace boost {
+  namespace asio {
+    class io_service;
+  };
+};
+
 namespace systemstate {
 
 class FileNode;
@@ -122,8 +128,9 @@ private:
 
 #define REGISTER_STATE_PLUGIN(x)					\
   extern "C" systemstate::Plugin *					\
-  __init(const std::function<void(systemstate::Plugin *)>& f) {		\
-    x *p = new x();							\
+  __init(const std::function<void(systemstate::Plugin *)>& f,		\
+	 const boost::asio::io_service& service) { 			\
+    x *p = new x(service);						\
     p->setNotifier(f);							\
     return p;								\
   }

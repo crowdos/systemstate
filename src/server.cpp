@@ -223,7 +223,7 @@ const systemstate::Node *Server::findNode(const std::string& path) {
   }
 
   // Find the plugin and load it:
-  if (!m_loader.load(path)) {
+  if (!m_loader.load(path, m_service)) {
     return nullptr;
   }
 

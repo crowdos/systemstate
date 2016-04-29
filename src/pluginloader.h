@@ -4,6 +4,12 @@
 #include <list>
 #include <memory>
 
+namespace boost {
+  namespace asio {
+    class io_service;
+  };
+};
+
 namespace systemstate {
   class RootNode;
   class DirNode;
@@ -19,7 +25,7 @@ public:
   ~PluginLoader();
 
   systemstate::RootNode *rootNode();
-  bool load(const std::string& path);
+  bool load(const std::string& path, const boost::asio::io_service& service);
 
 private:
   void unload(systemstate::Plugin *plugin);
