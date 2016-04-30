@@ -10,6 +10,7 @@ class Context;
 class Display;
 class Lights;
 class Info;
+class Usb;
 
 class ControlContainer {
 public:
@@ -99,6 +100,15 @@ public:
   }
 
   bool read(std::stringstream& data);
+};
+
+class UsbConnected : public ControlNode<Usb> {
+public:
+  UsbConnected(systemstate::DirNode *dir, systemstate::Plugin *plugin, Context *ctx);
+  bool read(std::stringstream& data);
+
+private:
+  bool m_connected;
 };
 
 #endif /* __HW_HAL_H__ */
