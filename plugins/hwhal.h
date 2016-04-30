@@ -104,8 +104,16 @@ public:
 
 class UsbConnected : public ControlNode<Usb> {
 public:
-  UsbConnected(systemstate::DirNode *dir, systemstate::Plugin *plugin, Context *ctx);
+  UsbConnected(systemstate::DirNode *dir, systemstate::Plugin *plugin, Context *ctx) :
+    ControlNode<Usb>("Connected", dir, plugin, ctx, ControlId::Usb),
+    m_connected(false) {
+
+  }
+
   bool read(std::stringstream& data);
+
+  bool start();
+  void stop();
 
 private:
   bool m_connected;

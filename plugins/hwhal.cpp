@@ -40,6 +40,8 @@ template <class T> bool ControlNode<T>::start() {
   }
 
   m_ctl = m_ctx->control<T>(m_id);
+
+  return m_ctl != nullptr;
 }
 
 template <class T> void ControlNode<T>::stop() {
@@ -104,23 +106,35 @@ bool DeviceCodeName::read(std::stringstream& data) {
   return true;
 }
 
-UsbConnected::UsbConnected(systemstate::DirNode *dir, systemstate::Plugin *plugin, Context *ctx) :
-  ControlNode<Usb>("Connected", dir, plugin, ctx, ControlId::Usb) {
-
-  control()->addListener([this](bool connected) {
-      if (connected != m_connected) {
-	m_connected = connected;
-	std::stringstream data;
-	read(data);
-	dataChanged(data.str());
-      }
-    });
-  m_connected = control()->isCableConnected();
-}
-
 bool UsbConnected::read(std::stringstream& data) {
   data << m_connected ? "1" : "0";
   return true;
+}
+
+bool UsbConnected::start() {
+  if (ControlNode::start()) {
+
+    control()->addListener([this](bool connected) {
+	if (connected != m_connected) {
+	  m_connected = connected;
+	  std::stringstream data;
+	  read(data);
+	  dataChanged(data.str());
+	}
+      });
+    m_connected = control()->isCableConnected();
+    return true;
+  }
+
+  return false;
+}
+
+void UsbConnected::stop() {
+  if (control()) {
+    control()->addListener(nullptr);
+  }
+
+  ControlNode::stop();
 }
 
 // Now the plugin
@@ -173,7 +187,7 @@ void HwHalPlugin::init(systemstate::DirNode *root) {
   device->appendFile(new DeviceCodeName(device, this, m_ctx));
 
   systemstate::DirNode *usb = root->appendDir("USB");
-  device->appendFile(new UsbConnected(usb, this, m_ctx));
+  usb->appendFile(new UsbConnected(usb, this, m_ctx));
 }
 
 bool HwHalPlugin::start(systemstate::FileNode *node) {
