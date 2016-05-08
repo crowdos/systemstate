@@ -5,8 +5,7 @@ Maintainer: Mohammed Sameer <msameer@foolab.org>
 Build-Depends: debhelper (>= 9),
                cmake,
                libboost-system-dev,
-               libhwhal-dev,
-	       qtbase5-dev,
+               qtbase5-dev,
                qtdeclarative5-dev
 Standards-Version: 3.9.6
 
@@ -58,14 +57,6 @@ Depends: ${misc:Depends},
          systemstate (= ${binary:Version})
 Description: systemstate test2 plugin
  systemstate test2 plugin
-
-Package: systemstate-plugin-hwhal
-Architecture: any
-Depends: ${misc:Depends},
-         ${shlibs:Depends},
-         systemstate (= ${binary:Version})
-Description: systemstate hwhal plugin
- systemstate hwhal plugin
 
 Package: libsystemstate-contextsubscriber1
 Architecture: any
