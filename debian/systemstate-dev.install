@@ -1,0 +1,4 @@
+usr/lib/libsystemstate.so
+usr/include/systemstate/protocol.h
+usr/include/systemstate/stateplugin.h
+usr/include/systemstate/utils.h

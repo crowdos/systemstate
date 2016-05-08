@@ -16,6 +16,14 @@ Depends: ${misc:Depends},
 Description: systemstate daemon
  systemstate daemon
 
+Package: systemstate-dev
+Architecture: any
+Depends: ${misc:Depends},
+         ${shlibs:Depends},
+         systemstate (= ${binary:Version})
+Description: systemstate development headers
+ systemstate development headers
+
 Package: systemstate-tools
 Architecture: any
 Depends: ${misc:Depends},
