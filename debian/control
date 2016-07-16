@@ -5,8 +5,8 @@ Maintainer: Mohammed Sameer <msameer@foolab.org>
 Build-Depends: debhelper (>= 9),
                cmake,
                libboost-system-dev,
-               qtbase5-dev,
-               qtdeclarative5-dev
+               qtbase5-dev (>= 5.5.1-),
+               qtdeclarative5-dev (>= 5.5.1-)
 Standards-Version: 3.9.6
 
 Package: systemstate
